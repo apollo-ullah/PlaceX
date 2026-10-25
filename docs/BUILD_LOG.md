@@ -76,3 +76,10 @@ closes at 08:40 PT (gated by config.auctionsEnabled), 13 vitest harness tests in
 race, and scripts/load.ts (refuses to target the live database). Lead verified: server build,
 typecheck, tests, local republish, seed, smoke pass, client build. Bindings unchanged.
 Note for UI: event kind `achievement` carries the achievement kind in `objectId`.
+
+### 00:40 merged Agent E (audio) into main
+
+Procedural Web Audio engine: looped noise wind pitched by `pitchRatio`, low-pass from density,
+layers for lava, storm, ice, and an orbit tone for airless bodies; crossfades, iOS resume handling,
+mic pitch shifter ("hear your voice there"), and a DevPanel mounted behind `?audio=1`. Verified by
+the agent with a headless Chrome harness measuring output spectra and envelopes.
