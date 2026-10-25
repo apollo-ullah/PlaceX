@@ -92,3 +92,19 @@ smoke: ack 109 ms, visible 109 ms. Load test on `placex-staging`: 150 clients fo
 a 13 claims per second burst (single-process harness decoding 150 sockets inflates this); 30 clients
 for 60 seconds: p50 134 ms, p95 455 ms. Auction schedule when enabled: Mars 08:00, Moon 08:20,
 Earth 08:40 PT. Auction-only objects cannot be taken over, so the Earth winner keeps it.
+
+### 00:58 merged Agent B (data) and Agent D (UI) into main
+
+Data: `pipeline/build.py` pulls `pscomppars` from the NASA Exoplanet Archive TAP endpoint, converts
+to light years, fills 23 masses and 42 radii with a documented mass-radius relation (flagged
+`estimated`), classifies by density and temperature, prices and computes sound per the PRD, adds 14
+hand-built Solar System bodies, 27 verified facts, templated facts and realtor blurbs for the rest,
+and `stars.json` (5,000 brightest HYG v4.0 stars, CC BY-SA 4.0). Lead decision: ship the full
+6,430-object catalog (4.75 MB, about 620 KB gzipped) instead of the 4 MB nearest-5,432 cut, so the
+"6,000+" line is true; validator limit raised to 5 MB. 100% of exoplanets price inside 400 to 1,500
+credits, median 782. Both `placex-local` and live `placex` reseeded to 6,430 objects.
+
+UI: landing, HUD (credits, search, Teleport, leaderboard, ticker), bottom-sheet listing card with
+price breakdown, stat chips with "est.", verified badge, Play sound, Claim, Hostile takeover, SNIPED
+and CLAIMED stamps, shake on INSUFFICIENT_CREDITS, `/big` mode with stats bar and QR slot, portfolio
+drawer, takeover banner, achievement toasts. Verified by the agent at 390 px and 1440 px.
