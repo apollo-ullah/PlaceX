@@ -626,7 +626,7 @@ export const adminReset = spacetimedb.reducer(ctx => {
   for (const r of [...ctx.db.achievement.iter()]) ctx.db.achievement.id.delete(r.id);
   for (const r of [...ctx.db.auction.iter()]) ctx.db.auction.objectId.delete(r.objectId);
   for (const r of [...ctx.db.auctionSchedule.iter()]) ctx.db.auctionSchedule.scheduledId.delete(r.scheduledId);
-  for (const p of [...ctx.db.player.iter()]) {
-    ctx.db.player.identity.update({ ...p, credits: STARTING_CREDITS, portfolioValue: 0n, claimCount: 0 });
-  }
+  // Players are deleted too, so test callsigns vanish; connected clients get a fresh
+  // row on their next connect and see the landing again.
+  for (const p of [...ctx.db.player.iter()]) ctx.db.player.identity.delete(p.identity);
 });

@@ -129,3 +129,16 @@ Lead added `state/effects.tsx` (claim ripple on other players' claims, presence 
 focus) and `SceneBoundary` so the UI survives when WebGL is unavailable (found by the headless
 probe: without the boundary a WebGL failure blanked the whole app). `scripts/probe.mjs` now uses
 SwiftShader so it can render WebGL; `scripts/e2e.mjs` drives a real claim through the UI.
+
+## 01:35 v1 LIVE (90 minutes ahead of the 3:00 AM deadline)
+
+https://claimtheuniverse.vercel.app (big screen: /big). Full stack on main: 6,430 real objects,
+instanced 3D universe, listing card with real data, claim with server-side race protection, live
+ticker, leaderboard, atmosphere sound, hostile takeover, achievements, presence ghosts, territory.
+Verified: `scripts/e2e.mjs` drove a real claim through the production UI against Maincloud
+(landing, callsign, flyTo, Claim, ticker line). Live database reset clean (admin_reset now also
+drops player rows so test callsigns vanish), `set_flags true true`: passive income on, auctions on,
+Mars auction open and ending 08:00 PT, then Moon 08:20, Earth 08:40.
+
+Running: Agent D2+F (auction panel, class card effects, big screen polish) and Agent G (QA on the
+live site, load rerun on staging). Merge order after review: G's fixes as assigned, then D2+F.
