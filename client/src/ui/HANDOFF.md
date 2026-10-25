@@ -9,7 +9,8 @@ No new npm dependencies. Plain CSS, no UI framework.
 
 | File | What |
 | --- | --- |
-| `index.tsx` | `Shell({ big })`. Explorer: landing until `useHasProfile()`, then HUD, leaderboard, ticker, listing card, portfolio, takeover banner, achievement toasts. `big` renders `BigScreen` with no landing and no card. The `.px-root` layer is `pointer-events: none`, each panel re-enables, so taps between panels reach the scene. |
+| `index.tsx` | `Shell({ big })`. Explorer: landing until `useHasProfile()`, then HUD, help, leaderboard, ticker, listing card, portfolio, takeover banner, achievement toasts, first-run tutorial. `big` renders `BigScreen` with no landing and no card. The `.px-root` layer is `pointer-events: none`, each panel re-enables, so taps between panels reach the scene. |
+| `Tutorial.tsx` | Four-step how-to (claim, rent, rivalry/auctions, portfolio). Auto-opens once per browser via `localStorage` key `placex.tutorial.v1`. Reopen with the `?` help button. |
 | `ui.css` | The whole visual system. Mobile first, desktop rules under `@media (min-width: 900px)`. Glass panels, gold for self, crew colors via `--c` custom property. |
 | `Landing.tsx` | Headline, callsign input (2 to 16, inline `BAD_CALLSIGN` copy, client-side check first), crew picker from `CREWS`, Enter calls `actions.setProfile`. Enter is disabled with a "Connecting" state while `useConnection().connected` is false. |
 | `Hud.tsx` | `Credits` (top left, bumps on change, opens the portfolio), `Search` (`searchObjects` over `useObjects().list`, shows owner or price per result, pick calls `api.flyTo(id)` and `select(id)`), `Teleport` (bottom center, `api.teleport()`), `ConnectionPill` (shown when not connected). |

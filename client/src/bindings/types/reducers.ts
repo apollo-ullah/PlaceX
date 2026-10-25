@@ -7,8 +7,11 @@ import { type Infer as __Infer } from "spacetimedb";
 
 // Import all reducer arg schemas
 import AdminResetReducer from "../admin_reset_reducer";
+import BuyListingReducer from "../buy_listing_reducer";
+import CancelListingReducer from "../cancel_listing_reducer";
 import ClaimObjectReducer from "../claim_object_reducer";
 import HostileTakeoverReducer from "../hostile_takeover_reducer";
+import ListForSaleReducer from "../list_for_sale_reducer";
 import PlaceBidReducer from "../place_bid_reducer";
 import SeedObjectsReducer from "../seed_objects_reducer";
 import SetFlagsReducer from "../set_flags_reducer";
@@ -16,8 +19,11 @@ import SetProfileReducer from "../set_profile_reducer";
 import UpdatePresenceReducer from "../update_presence_reducer";
 
 export type AdminResetParams = __Infer<typeof AdminResetReducer>;
+export type BuyListingParams = __Infer<typeof BuyListingReducer>;
+export type CancelListingParams = __Infer<typeof CancelListingReducer>;
 export type ClaimObjectParams = __Infer<typeof ClaimObjectReducer>;
 export type HostileTakeoverParams = __Infer<typeof HostileTakeoverReducer>;
+export type ListForSaleParams = __Infer<typeof ListForSaleReducer>;
 export type PlaceBidParams = __Infer<typeof PlaceBidReducer>;
 export type SeedObjectsParams = __Infer<typeof SeedObjectsReducer>;
 export type SetFlagsParams = __Infer<typeof SetFlagsReducer>;

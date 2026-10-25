@@ -12,8 +12,9 @@ import { Leaderboard } from './Leaderboard';
 import { Ticker } from './Ticker';
 import { ListingCard } from './ListingCard';
 import { BigScreen } from './BigScreen';
-import { AchievementToasts, Portfolio, TakeoverBanner } from './Extras';
+import { AchievementToasts, IncomeToasts, Portfolio, TakeoverBanner } from './Extras';
 import { AuctionPanel } from './AuctionPanel';
+import { HelpButton, Tutorial, shouldAutoOpenTutorial } from './Tutorial';
 
 export { AuctionPanel, BidControls } from './AuctionPanel';
 
@@ -30,11 +31,23 @@ function Explorer() {
   const selectedId = useSelectedObjectId();
   const select = useSceneStore(s => s.select);
   const [portfolio, setPortfolio] = useState(false);
+  const [tutorial, setTutorial] = useState(false);
   const closePortfolio = useCallback(() => setPortfolio(false), []);
+  const closeTutorial = useCallback(() => setTutorial(false), []);
+  const openTutorial = useCallback(() => {
+    select(null);
+    setPortfolio(false);
+    setTutorial(true);
+  }, [select]);
 
   // Opening a listing closes the portfolio, and vice versa, so the two sheets never stack.
   useEffect(() => { if (selectedId) setPortfolio(false); }, [selectedId]);
   const openPortfolio = useCallback(() => { select(null); setPortfolio(true); }, [select]);
+
+  // First enter in this browser: coach them once the landing is gone.
+  useEffect(() => {
+    if (hasProfile && shouldAutoOpenTutorial()) setTutorial(true);
+  }, [hasProfile]);
 
   if (!hasProfile) return <div className="px-root"><Landing /></div>;
 
@@ -43,7 +56,10 @@ function Explorer() {
       <div className="px-hud-top">
         <Credits onOpenPortfolio={openPortfolio} />
         <Search />
-        <Leaderboard />
+        <div className="px-hud-top__right">
+          <HelpButton onOpen={openTutorial} />
+          <Leaderboard />
+        </div>
       </div>
       <div className="px-hud-bottom">
         <Ticker />
@@ -56,6 +72,8 @@ function Explorer() {
       <Portfolio open={portfolio} onClose={closePortfolio} />
       <TakeoverBanner />
       <AchievementToasts />
+      <IncomeToasts />
+      <Tutorial open={tutorial} onClose={closeTutorial} />
     </div>
   );
 }

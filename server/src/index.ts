@@ -60,6 +60,9 @@ const claim = table(
     owner: t.identity().index('btree'),
     pricePaid: t.u64(),
     claimedAt: t.timestamp(),
+    // Player market: fixed-ask listing. Defaults keep existing rows migration-safe.
+    forSale: t.bool().default(false),
+    askCredits: t.u64().default(0n),
   }
 );
 
@@ -332,9 +335,13 @@ function transferClaim(ctx: Ctx, objectId: string, winner: Identity, pricePaid: 
         claimCount: prev.claimCount > 0 ? prev.claimCount - 1 : 0,
       });
     }
-    ctx.db.claim.objectId.update({ objectId, owner: winner, pricePaid, claimedAt: ctx.timestamp });
+    ctx.db.claim.objectId.update({
+      objectId, owner: winner, pricePaid, claimedAt: ctx.timestamp, forSale: false, askCredits: 0n,
+    });
   } else {
-    ctx.db.claim.insert({ objectId, owner: winner, pricePaid, claimedAt: ctx.timestamp });
+    ctx.db.claim.insert({
+      objectId, owner: winner, pricePaid, claimedAt: ctx.timestamp, forSale: false, askCredits: 0n,
+    });
   }
   const w = ctx.db.player.identity.find(winner);
   if (w) {
@@ -413,7 +420,10 @@ export const claimObject = spacetimedb.reducer(
     if (ctx.db.claim.objectId.find(objectId)) throw new SenderError('ALREADY_CLAIMED');
     if (p.credits < obj.priceCredits) throw new SenderError('INSUFFICIENT_CREDITS');
 
-    ctx.db.claim.insert({ objectId, owner: ctx.sender, pricePaid: obj.priceCredits, claimedAt: ctx.timestamp });
+    ctx.db.claim.insert({
+      objectId, owner: ctx.sender, pricePaid: obj.priceCredits, claimedAt: ctx.timestamp,
+      forSale: false, askCredits: 0n,
+    });
     ctx.db.player.identity.update({
       ...p,
       credits: p.credits - obj.priceCredits,
@@ -421,6 +431,74 @@ export const claimObject = spacetimedb.reducer(
       claimCount: p.claimCount + 1,
     });
     pushEvent(ctx, 'claim', p.callsign, objectId, obj.priceCredits);
+    checkCollectionAchievements(ctx, ctx.sender, p.callsign, objectId);
+  }
+);
+
+export const listForSale = spacetimedb.reducer(
+  { objectId: t.string(), askCredits: t.u64() },
+  (ctx, { objectId, askCredits }) => {
+    const p = requirePlayer(ctx);
+    const obj = ctx.db.celestialObject.id.find(objectId);
+    if (!obj) throw new SenderError('UNKNOWN_OBJECT');
+    const existing = ctx.db.claim.objectId.find(objectId);
+    if (!existing) throw new SenderError('NOT_CLAIMED');
+    if (!existing.owner.equals(ctx.sender)) throw new SenderError('NOT_OWNER');
+    // Floor at the catalog list price so the market cannot be spammed with 1 cr asks.
+    if (askCredits < obj.priceCredits) throw new SenderError('ASK_TOO_LOW');
+    const activeAuction = ctx.db.auction.objectId.find(objectId);
+    if (activeAuction && activeAuction.active) throw new SenderError('AUCTION_ONLY');
+
+    ctx.db.claim.objectId.update({ ...existing, forSale: true, askCredits });
+    pushEvent(ctx, 'listed', p.callsign, objectId, askCredits);
+  }
+);
+
+export const cancelListing = spacetimedb.reducer(
+  { objectId: t.string() },
+  (ctx, { objectId }) => {
+    requirePlayer(ctx);
+    const existing = ctx.db.claim.objectId.find(objectId);
+    if (!existing) throw new SenderError('NOT_CLAIMED');
+    if (!existing.owner.equals(ctx.sender)) throw new SenderError('NOT_OWNER');
+    if (!existing.forSale) throw new SenderError('NOT_FOR_SALE');
+    ctx.db.claim.objectId.update({ ...existing, forSale: false, askCredits: 0n });
+  }
+);
+
+export const buyListing = spacetimedb.reducer(
+  { objectId: t.string() },
+  (ctx, { objectId }) => {
+    const p = requirePlayer(ctx);
+    const obj = ctx.db.celestialObject.id.find(objectId);
+    if (!obj) throw new SenderError('UNKNOWN_OBJECT');
+    const existing = ctx.db.claim.objectId.find(objectId);
+    if (!existing) throw new SenderError('NOT_CLAIMED');
+    if (!existing.forSale || existing.askCredits === 0n) throw new SenderError('NOT_FOR_SALE');
+    if (existing.owner.equals(ctx.sender)) throw new SenderError('OWN_OBJECT');
+    const cost = existing.askCredits;
+    if (p.credits < cost) throw new SenderError('INSUFFICIENT_CREDITS');
+
+    ctx.db.claim.objectId.update({
+      objectId, owner: ctx.sender, pricePaid: cost, claimedAt: ctx.timestamp,
+      forSale: false, askCredits: 0n,
+    });
+    ctx.db.player.identity.update({
+      ...p,
+      credits: p.credits - cost,
+      portfolioValue: p.portfolioValue + cost,
+      claimCount: p.claimCount + 1,
+    });
+    const prev = ctx.db.player.identity.find(existing.owner);
+    if (prev) {
+      ctx.db.player.identity.update({
+        ...prev,
+        credits: prev.credits + cost,
+        portfolioValue: prev.portfolioValue > existing.pricePaid ? prev.portfolioValue - existing.pricePaid : 0n,
+        claimCount: prev.claimCount > 0 ? prev.claimCount - 1 : 0,
+      });
+    }
+    pushEvent(ctx, 'sale', p.callsign, objectId, cost);
     checkCollectionAchievements(ctx, ctx.sender, p.callsign, objectId);
   }
 );
@@ -439,8 +517,11 @@ export const hostileTakeover = spacetimedb.reducer(
     const cost = TAKEOVER_MULT * obj.priceCredits;
     if (p.credits < cost) throw new SenderError('INSUFFICIENT_CREDITS');
 
-    // Move the claim.
-    ctx.db.claim.objectId.update({ objectId, owner: ctx.sender, pricePaid: cost, claimedAt: ctx.timestamp });
+    // Move the claim and clear any open ask.
+    ctx.db.claim.objectId.update({
+      objectId, owner: ctx.sender, pricePaid: cost, claimedAt: ctx.timestamp,
+      forSale: false, askCredits: 0n,
+    });
 
     // Buyer pays 2x and books the object at what they paid.
     ctx.db.player.identity.update({

@@ -103,6 +103,8 @@ function LiveState({ children }: { children: ReactNode }) {
         ownerCrew: p?.crew ?? 'blue',
         pricePaid: Number(c.pricePaid),
         claimedAt: ms(c.claimedAt),
+        forSale: !!c.forSale,
+        askCredits: Number(c.askCredits ?? 0n),
       });
     }
     return m;
@@ -185,6 +187,9 @@ function LiveState({ children }: { children: ReactNode }) {
       claim: objectId => reducers().claimObject({ objectId }),
       takeover: objectId => reducers().hostileTakeover({ objectId }),
       bid: (objectId, amount) => reducers().placeBid({ objectId, amount: BigInt(Math.round(amount)) }),
+      listForSale: (objectId, askCredits) => reducers().listForSale({ objectId, askCredits: BigInt(Math.round(askCredits)) }),
+      cancelListing: objectId => reducers().cancelListing({ objectId }),
+      buyListing: objectId => reducers().buyListing({ objectId }),
       sendPresence: (targetObjectId, x, y, z) => {
         const t = Date.now();
         if (t - lastPresence.current < PRESENCE_MS) return;

@@ -43,7 +43,8 @@ export function Landing() {
         <h1>Claim the universe <em>before someone else does.</em></h1>
         <p className="px-landing__sub">
           Thousands of real exoplanets, priced by physics, one owner each.
-          You start with <b className="px-mono">{STARTING_CREDITS.toLocaleString('en-US')} credits</b>. No sign-up, just a callsign.
+          You start with <b className="px-mono">{STARTING_CREDITS.toLocaleString('en-US')} credits</b>.
+          Rent pays every minute. No sign-up, just a callsign.
         </p>
 
         <form onSubmit={submit} noValidate>

@@ -15,4 +15,6 @@ export default __t.row({
   owner: __t.identity(),
   pricePaid: __t.u64().name("price_paid"),
   claimedAt: __t.timestamp().name("claimed_at"),
+  forSale: __t.bool().name("for_sale"),
+  askCredits: __t.u64().name("ask_credits"),
 });

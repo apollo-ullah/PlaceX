@@ -77,15 +77,21 @@ export type ReducerError =
   | 'BAD_CREW'
   | 'NOT_CLAIMED'
   | 'OWN_OBJECT'
+  | 'NOT_OWNER'
   | 'NO_AUCTION'
   | 'AUCTION_ENDED'
   | 'BID_TOO_LOW'
+  | 'ASK_TOO_LOW'
+  | 'NOT_FOR_SALE'
   | 'NOT_ADMIN'
   | 'DISABLED';
 
 // Event conventions: `achievement` events carry the AchievementKind in `objectId`;
 // `income` events have an empty `objectId` and `amount` = credits paid that minute.
-export type EventKind = 'claim' | 'takeover' | 'bid' | 'auction_won' | 'income' | 'achievement' | 'join';
+// `listed` / `sale` are the player fixed-ask market.
+export type EventKind =
+  | 'claim' | 'takeover' | 'bid' | 'auction_won' | 'income' | 'achievement' | 'join'
+  | 'listed' | 'sale';
 
 export type AchievementKind =
   | 'first_claim' | 'diamond_collector' | 'water_baron' | 'hell_landlord'
@@ -111,6 +117,8 @@ export interface ClaimView {
   ownerCrew: Crew;
   pricePaid: number;
   claimedAt: number;       // ms since epoch
+  forSale: boolean;
+  askCredits: number;      // meaningful when forSale
 }
 
 export interface EventView {

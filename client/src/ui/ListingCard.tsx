@@ -1,8 +1,8 @@
 // Listing card for the selected object, with the claim and takeover flow.
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as RPointerEvent, type ReactNode } from 'react';
 import {
-  formatCredits, formatUsd, reducerErrorCode, useActions, useAuctions, useClaim, useConnection, useObject, usePlayer,
-  useSceneApi, useSceneStore, useSelectedObjectId,
+  formatCredits, formatUsd, reducerErrorCode, rentPerMinute, useActions, useAuctions, useClaim, useConnection,
+  useObject, usePlayer, usePresence, useSceneApi, useSceneStore, useSelectedObjectId,
 } from '../state';
 import { playPlanetSound, stopSound, SOUND_DISCLAIMER } from '../audio';
 import { CREWS, TAKEOVER_MULT, type CelestialObject } from '../types';
@@ -11,7 +11,7 @@ import { useToast } from './Toast';
 import { BidControls } from './AuctionPanel';
 import { CLASS_LABEL, ERROR_COPY, fmtDays, fmtDistance, fmtG, fmtMult, fmtTempC, fmtTempK, fmtUsdPerKg } from './format';
 
-type Phase = 'idle' | 'pending' | 'claimed' | 'sniped' | 'insufficient' | 'auction';
+type Phase = 'idle' | 'pending' | 'claimed' | 'sniped' | 'insufficient' | 'auction' | 'bought';
 type Stamp = 'sniped' | 'claimed' | null;
 
 export function ListingCard() {
@@ -49,12 +49,19 @@ function CardBody({ obj, open, onClose }: { obj: CelestialObject; open: boolean;
   const actions = useActions();
   const api = useSceneApi();
   const toast = useToast();
+  const presence = usePresence();
+  const watchers = useMemo(
+    () => presence.filter(p => p.targetObjectId === obj.id).length,
+    [presence, obj.id]
+  );
 
   const [phase, setPhase] = useState<Phase>('idle');
   const [stamp, setStamp] = useState<Stamp>(null);
   const [shortfall, setShortfall] = useState(0);
   const [why, setWhy] = useState(false);
   const [playing, setPlaying] = useState(false);
+  const [ask, setAsk] = useState(() => obj.priceCredits);
+  const [listing, setListing] = useState(false);
   const timers = useRef<number[]>([]);
   const later = useCallback((fn: () => void, ms: number) => { timers.current.push(window.setTimeout(fn, ms)); }, []);
   useEffect(() => () => { timers.current.forEach(clearTimeout); stopSound(); }, []);
@@ -71,22 +78,32 @@ function CardBody({ obj, open, onClose }: { obj: CelestialObject; open: boolean;
   }, [claim?.owner]);
 
   const mine = !!claim && claim.owner === identity;
-  const isTakeover = !!claim && !mine;
-  const cost = isTakeover ? obj.priceCredits * TAKEOVER_MULT : obj.priceCredits;
+  const onMarket = !!claim && claim.forSale && !mine;
+  const isTakeover = !!claim && !mine && !onMarket;
+  const buyCost = onMarket ? claim!.askCredits : 0;
+  const cost = onMarket ? buyCost : isTakeover ? obj.priceCredits * TAKEOVER_MULT : obj.priceCredits;
   const canAfford = (me?.credits ?? 0) >= cost;
+  const rent = claim ? rentPerMinute(claim.pricePaid, obj.habitableZone) : rentPerMinute(obj.priceCredits, obj.habitableZone);
+
+  useEffect(() => {
+    if (claim?.forSale) setAsk(claim.askCredits);
+    else setAsk(Math.max(obj.priceCredits, claim?.pricePaid ?? obj.priceCredits));
+  }, [claim?.forSale, claim?.askCredits, claim?.pricePaid, obj.priceCredits]);
 
   async function act() {
-    if (!me || phase === 'pending' || phase === 'claimed') return;
+    if (!me || phase === 'pending' || phase === 'claimed' || phase === 'bought') return;
     setPhase('pending');
     try {
-      if (isTakeover) await actions.takeover(obj.id); else await actions.claim(obj.id);
-      setPhase('claimed');
+      if (onMarket) await actions.buyListing(obj.id);
+      else if (isTakeover) await actions.takeover(obj.id);
+      else await actions.claim(obj.id);
+      setPhase(onMarket ? 'bought' : 'claimed');
       setStamp('claimed');
       api?.playClaimAnimation(obj.id, CREWS[me.crew].color);
       later(() => { setStamp(null); setPhase('idle'); }, 1500);
     } catch (e) {
       const code = reducerErrorCode(e);
-      if (code === 'ALREADY_CLAIMED') {
+      if (code === 'ALREADY_CLAIMED' || code === 'NOT_FOR_SALE') {
         setPhase('sniped');
         setStamp('sniped');
         later(() => { setStamp(null); setPhase('idle'); }, 1700);
@@ -100,6 +117,34 @@ function CardBody({ obj, open, onClose }: { obj: CelestialObject; open: boolean;
         setPhase('idle');
         toast(code ? ERROR_COPY[code] : 'Something went sideways. Try again.', 'err');
       }
+    }
+  }
+
+  async function listIt() {
+    if (!me || listing) return;
+    setListing(true);
+    try {
+      await actions.listForSale(obj.id, Math.round(ask));
+      toast(`Listed ${obj.name} for ${formatCredits(ask)} cr.`, 'gold');
+    } catch (e) {
+      const code = reducerErrorCode(e);
+      toast(code ? ERROR_COPY[code] : 'Could not list that deed.', 'err');
+    } finally {
+      setListing(false);
+    }
+  }
+
+  async function delist() {
+    if (!me || listing) return;
+    setListing(true);
+    try {
+      await actions.cancelListing(obj.id);
+      toast('Listing pulled. Still yours.', 'ok');
+    } catch (e) {
+      const code = reducerErrorCode(e);
+      toast(code ? ERROR_COPY[code] : 'Could not cancel that listing.', 'err');
+    } finally {
+      setListing(false);
     }
   }
 
@@ -234,18 +279,58 @@ function CardBody({ obj, open, onClose }: { obj: CelestialObject; open: boolean;
           <div className={`px-owner ${mine ? 'px-owner--me' : ''}`} style={{ '--c': ownerColor } as CSSProperties}>
             <span className="px-owner__dot" />
             <span className="px-owner__col">
-              <span className="px-owner__k">{mine ? 'Yours' : 'Owned by'}</span>
+              <span className="px-owner__k">{mine ? 'Yours' : claim.forSale ? 'For sale by' : 'Owned by'}</span>
               <span className="px-owner__name">{mine ? `${claim.ownerCallsign}, that is you` : claim.ownerCallsign}</span>
             </span>
-            <span className="px-owner__paid px-mono"><small>{mine ? 'you paid' : 'paid'}</small>{formatCredits(claim.pricePaid)} cr</span>
+            <span className="px-owner__paid px-mono">
+              <small>{claim.forSale && !mine ? 'ask' : mine ? 'you paid' : 'paid'}</small>
+              {formatCredits(claim.forSale && !mine ? claim.askCredits : claim.pricePaid)} cr
+            </span>
           </div>
+        )}
+
+        {(mine || watchers > 0) && (
+          <p className={`px-card__pulse ${watchers ? 'px-card__pulse--threat' : ''}`}>
+            {mine
+              ? <>Renting <b className="px-mono">+{formatCredits(rent)} cr</b> / min{watchers ? <> · <b>{watchers} looking now</b></> : null}</>
+              : <><b>{watchers}</b> other player{watchers === 1 ? '' : 's'} looking here right now</>}
+          </p>
         )}
 
         <div className="px-cta">
           {auction ? (
             <BidControls auction={auction} obj={obj} showStatus />
           ) : mine ? (
-            <p className="px-cta__hint px-cta__hint--ok">This one is in your portfolio. Nice work, landlord.</p>
+            <div className="px-sell">
+              {claim?.forSale ? (
+                <>
+                  <p className="px-cta__hint px-cta__hint--ok">
+                    Listed at <span className="px-mono">{formatCredits(claim.askCredits)} cr</span>. Waiting for a buyer.
+                  </p>
+                  <button type="button" className="px-btn px-btn--block px-btn--ghost" disabled={listing} onClick={delist}>
+                    {listing ? <><span className="px-spin" /> Pulling listing</> : 'Cancel listing'}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <label className="px-sell__ask">
+                    <span className="px-label">Ask price</span>
+                    <input
+                      className="px-input px-mono"
+                      type="number"
+                      min={obj.priceCredits}
+                      step={50}
+                      value={ask}
+                      onChange={e => setAsk(Math.max(0, Number(e.target.value) || 0))}
+                    />
+                  </label>
+                  <button type="button" className="px-btn px-btn--block px-btn--primary" disabled={listing || ask < obj.priceCredits} onClick={listIt}>
+                    {listing ? <><span className="px-spin" /> Listing</> : <>List for sale <span className="px-mono">{formatCredits(ask)} cr</span></>}
+                  </button>
+                  <p className="px-cta__hint">Floor is the list price ({formatCredits(obj.priceCredits)} cr). Buyers pay your ask. You keep the credits.</p>
+                </>
+              )}
+            </div>
           ) : showAuction ? (
             <div className="px-auction-line">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 4l6 6-8 8-6-6zM4 20h8" /></svg>
@@ -257,22 +342,48 @@ function CardBody({ obj, open, onClose }: { obj: CelestialObject; open: boolean;
                 type="button"
                 className={[
                   'px-btn px-btn--block',
-                  isTakeover ? 'px-btn--danger' : 'px-btn--primary',
+                  onMarket ? 'px-btn--primary' : isTakeover ? 'px-btn--danger' : 'px-btn--primary',
                   phase === 'pending' && 'px-btn--pressed',
                   phase === 'insufficient' && 'px-btn--shake',
                 ].filter(Boolean).join(' ')}
-                disabled={phase === 'pending' || phase === 'claimed' || !me}
+                disabled={phase === 'pending' || phase === 'claimed' || phase === 'bought' || !me}
                 onClick={act}
               >
-                {phase === 'pending' ? <><span className="px-spin" />{isTakeover ? 'Filing the takeover' : 'Filing the deed'}</>
-                  : phase === 'claimed' ? 'Yours'
+                {phase === 'pending' ? <><span className="px-spin" />{onMarket ? 'Closing the deal' : isTakeover ? 'Filing the takeover' : 'Filing the deed'}</>
+                  : phase === 'claimed' || phase === 'bought' ? 'Yours'
+                  : onMarket ? <>Buy now <span className="px-mono">{formatCredits(cost)} cr</span></>
                   : isTakeover ? <>Hostile takeover <span className="px-mono">{formatCredits(cost)} cr</span></>
                   : <>Claim for <span className="px-mono">{formatCredits(cost)} cr</span></>}
               </button>
+              {onMarket && !obj.auctionOnly && (
+                <button
+                  type="button"
+                  className="px-btn px-btn--block px-btn--danger"
+                  disabled={phase === 'pending' || !me}
+                  onClick={async () => {
+                    if (!me) return;
+                    setPhase('pending');
+                    try {
+                      await actions.takeover(obj.id);
+                      setPhase('claimed');
+                      setStamp('claimed');
+                      api?.playClaimAnimation(obj.id, CREWS[me.crew].color);
+                      later(() => { setStamp(null); setPhase('idle'); }, 1500);
+                    } catch (e) {
+                      const code = reducerErrorCode(e);
+                      setPhase('idle');
+                      toast(code ? ERROR_COPY[code] : 'Takeover failed.', 'err');
+                    }
+                  }}
+                >
+                  Or hostile takeover <span className="px-mono">{formatCredits(obj.priceCredits * TAKEOVER_MULT)} cr</span>
+                </button>
+              )}
               <p className={`px-cta__hint ${phase === 'insufficient' ? 'px-cta__hint--err' : ''}`}>
                 {phase === 'insufficient'
                   ? `Short by ${formatCredits(shortfall)} cr. Teleport somewhere cheaper.`
                   : phase === 'sniped' ? 'Sniped. Someone beat you to it.'
+                  : onMarket ? `Pays ${claim?.ownerCallsign} their ask. Instant transfer.`
                   : isTakeover ? `Pays ${claim?.ownerCallsign} double. They will notice.`
                   : !canAfford ? `You have ${formatCredits(me?.credits ?? 0)} cr. This one costs more.`
                   : 'One owner per planet. Tap before someone else does.'}

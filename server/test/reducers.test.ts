@@ -229,3 +229,37 @@ describe('auctions and income (gated by config flags)', () => {
     expect(() => h.withReducerTx(A, ctx => mod.setFlags(ctx, { incomeEnabled: true, auctionsEnabled: true }))).toThrow('NOT_ADMIN');
   });
 });
+
+describe('player market (fixed ask)', () => {
+  it('lists, buys, and pays the seller', () => {
+    claim(A, 'wasp-76-b');
+    expect(() => h.withReducerTx(A, ctx => mod.listForSale(ctx, { objectId: 'wasp-76-b', askCredits: 100n }))).toThrow('ASK_TOO_LOW');
+    h.withReducerTx(A, ctx => mod.listForSale(ctx, { objectId: 'wasp-76-b', askCredits: 1200n }));
+    const listed = h.withReducerTx(A, ctx => ctx.db.claim.objectId.find('wasp-76-b')!);
+    expect(listed.forSale).toBe(true);
+    expect(listed.askCredits).toBe(1200n);
+
+    expect(() => h.withReducerTx(A, ctx => mod.buyListing(ctx, { objectId: 'wasp-76-b' }))).toThrow('OWN_OBJECT');
+    h.withReducerTx(B, ctx => mod.buyListing(ctx, { objectId: 'wasp-76-b' }));
+    const a = playerRow(A);
+    const b = playerRow(B);
+    expect(a.credits).toBe(10_000n - 900n + 1200n);
+    expect(a.claimCount).toBe(0);
+    expect(b.credits).toBe(10_000n - 1200n);
+    expect(b.claimCount).toBe(1);
+    const sold = h.withReducerTx(ADMIN, ctx => ctx.db.claim.objectId.find('wasp-76-b')!);
+    expect(sold.forSale).toBe(false);
+    expect(sold.owner.equals(playerRow(B).identity)).toBe(true);
+    const sales = h.withReducerTx(ADMIN, ctx => [...ctx.db.event.iter()].filter(e => e.kind === 'sale'));
+    expect(sales.length).toBe(1);
+  });
+
+  it('lets the owner cancel a listing', () => {
+    claim(A, 'jupiter');
+    h.withReducerTx(A, ctx => mod.listForSale(ctx, { objectId: 'jupiter', askCredits: 2500n }));
+    h.withReducerTx(A, ctx => mod.cancelListing(ctx, { objectId: 'jupiter' }));
+    const row = h.withReducerTx(A, ctx => ctx.db.claim.objectId.find('jupiter')!);
+    expect(row.forSale).toBe(false);
+    expect(() => h.withReducerTx(B, ctx => mod.buyListing(ctx, { objectId: 'jupiter' }))).toThrow('NOT_FOR_SALE');
+  });
+});

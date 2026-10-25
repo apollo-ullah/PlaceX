@@ -57,7 +57,7 @@ export function MockProvider({ children }: { children: ReactNode }) {
       setClaims(prev => {
         if (prev.has(o.id)) return prev;
         const next = new Map(prev);
-        next.set(o.id, { objectId: o.id, owner: b.identity, ownerCallsign: b.callsign, ownerCrew: b.crew, pricePaid: o.priceCredits, claimedAt: Date.now() });
+        next.set(o.id, { objectId: o.id, owner: b.identity, ownerCallsign: b.callsign, ownerCrew: b.crew, pricePaid: o.priceCredits, claimedAt: Date.now(), forSale: false, askCredits: 0 });
         return next;
       });
       push({ kind: 'claim', actor: b.identity, actorCallsign: b.callsign, objectId: o.id, amount: o.priceCredits });
@@ -95,7 +95,7 @@ export function MockProvider({ children }: { children: ReactNode }) {
             const isMe = a.highBidder === ME;
             const crew = isMe ? meRef.current.crew : bots.find(b => b.identity === a.highBidder)?.crew ?? 'red';
             const callsign = a.highBidderCallsign ?? 'someone';
-            setClaims(prev => new Map(prev).set(a.objectId, { objectId: a.objectId, owner: a.highBidder!, ownerCallsign: callsign, ownerCrew: crew, pricePaid: a.highBid, claimedAt: now }));
+            setClaims(prev => new Map(prev).set(a.objectId, { objectId: a.objectId, owner: a.highBidder!, ownerCallsign: callsign, ownerCrew: crew, pricePaid: a.highBid, claimedAt: now, forSale: false, askCredits: 0 }));
             if (isMe) setMe(m => ({ ...m, portfolioValue: m.portfolioValue + a.highBid, claimCount: m.claimCount + 1 }));
             push({ kind: 'auction_won', actor: a.highBidder, actorCallsign: callsign, objectId: a.objectId, amount: a.highBid });
           }
@@ -128,7 +128,7 @@ export function MockProvider({ children }: { children: ReactNode }) {
       if (claims.has(objectId)) throw new Error('ALREADY_CLAIMED');
       if (me.credits < o.priceCredits) throw new Error('INSUFFICIENT_CREDITS');
       await new Promise(r => setTimeout(r, 120));
-      setClaims(prev => new Map(prev).set(objectId, { objectId, owner: ME, ownerCallsign: me.callsign, ownerCrew: me.crew, pricePaid: o.priceCredits, claimedAt: Date.now() }));
+      setClaims(prev => new Map(prev).set(objectId, { objectId, owner: ME, ownerCallsign: me.callsign, ownerCrew: me.crew, pricePaid: o.priceCredits, claimedAt: Date.now(), forSale: false, askCredits: 0 }));
       setMe(m => ({ ...m, credits: m.credits - o.priceCredits, portfolioValue: m.portfolioValue + o.priceCredits, claimCount: m.claimCount + 1 }));
       push({ kind: 'claim', actor: ME, actorCallsign: me.callsign, objectId, amount: o.priceCredits });
     },
@@ -141,10 +141,40 @@ export function MockProvider({ children }: { children: ReactNode }) {
       const cost = o.priceCredits * TAKEOVER_MULT;
       if (me.credits < cost) throw new Error('INSUFFICIENT_CREDITS');
       await new Promise(r => setTimeout(r, 120));
-      setClaims(prev => new Map(prev).set(objectId, { objectId, owner: ME, ownerCallsign: me.callsign, ownerCrew: me.crew, pricePaid: cost, claimedAt: Date.now() }));
+      setClaims(prev => new Map(prev).set(objectId, { objectId, owner: ME, ownerCallsign: me.callsign, ownerCrew: me.crew, pricePaid: cost, claimedAt: Date.now(), forSale: false, askCredits: 0 }));
       setMe(m => ({ ...m, credits: m.credits - cost, portfolioValue: m.portfolioValue + cost, claimCount: m.claimCount + 1 }));
       setBots(bs => bs.map(b => b.identity === c.owner ? { ...b, credits: b.credits + cost, claimCount: Math.max(0, b.claimCount - 1) } : b));
       push({ kind: 'takeover', actor: ME, actorCallsign: me.callsign, objectId, amount: cost });
+    },
+    listForSale: async (objectId, askCredits) => {
+      const o = byId.get(objectId);
+      const c = claims.get(objectId);
+      if (!o) throw new Error('UNKNOWN_OBJECT');
+      if (!c) throw new Error('NOT_CLAIMED');
+      if (c.owner !== ME) throw new Error('NOT_OWNER');
+      if (askCredits < o.priceCredits) throw new Error('ASK_TOO_LOW');
+      setClaims(prev => new Map(prev).set(objectId, { ...c, forSale: true, askCredits }));
+      push({ kind: 'listed', actor: ME, actorCallsign: me.callsign, objectId, amount: askCredits });
+    },
+    cancelListing: async objectId => {
+      const c = claims.get(objectId);
+      if (!c) throw new Error('NOT_CLAIMED');
+      if (c.owner !== ME) throw new Error('NOT_OWNER');
+      if (!c.forSale) throw new Error('NOT_FOR_SALE');
+      setClaims(prev => new Map(prev).set(objectId, { ...c, forSale: false, askCredits: 0 }));
+    },
+    buyListing: async objectId => {
+      const c = claims.get(objectId);
+      if (!c) throw new Error('NOT_CLAIMED');
+      if (!c.forSale) throw new Error('NOT_FOR_SALE');
+      if (c.owner === ME) throw new Error('OWN_OBJECT');
+      if (me.credits < c.askCredits) throw new Error('INSUFFICIENT_CREDITS');
+      const cost = c.askCredits;
+      await new Promise(r => setTimeout(r, 120));
+      setClaims(prev => new Map(prev).set(objectId, { objectId, owner: ME, ownerCallsign: me.callsign, ownerCrew: me.crew, pricePaid: cost, claimedAt: Date.now(), forSale: false, askCredits: 0 }));
+      setMe(m => ({ ...m, credits: m.credits - cost, portfolioValue: m.portfolioValue + cost, claimCount: m.claimCount + 1 }));
+      setBots(bs => bs.map(b => b.identity === c.owner ? { ...b, credits: b.credits + cost, claimCount: Math.max(0, b.claimCount - 1) } : b));
+      push({ kind: 'sale', actor: ME, actorCallsign: me.callsign, objectId, amount: cost });
     },
     bid: async (objectId, amount) => {
       const o = byId.get(objectId);

@@ -35,8 +35,11 @@ import {
 
 // Import all reducer arg schemas
 import AdminResetReducer from "./admin_reset_reducer";
+import BuyListingReducer from "./buy_listing_reducer";
+import CancelListingReducer from "./cancel_listing_reducer";
 import ClaimObjectReducer from "./claim_object_reducer";
 import HostileTakeoverReducer from "./hostile_takeover_reducer";
+import ListForSaleReducer from "./list_for_sale_reducer";
 import PlaceBidReducer from "./place_bid_reducer";
 import SeedObjectsReducer from "./seed_objects_reducer";
 import SetFlagsReducer from "./set_flags_reducer";
@@ -158,8 +161,11 @@ const tablesSchema = __schema({
 /** The schema information for all reducers in this module. This is defined the same way as the reducers would have been defined in the server, except the body of the reducer is omitted in code generation. */
 const reducersSchema = __reducers(
   __reducerSchema("admin_reset", AdminResetReducer),
+  __reducerSchema("buy_listing", BuyListingReducer),
+  __reducerSchema("cancel_listing", CancelListingReducer),
   __reducerSchema("claim_object", ClaimObjectReducer),
   __reducerSchema("hostile_takeover", HostileTakeoverReducer),
+  __reducerSchema("list_for_sale", ListForSaleReducer),
   __reducerSchema("place_bid", PlaceBidReducer),
   __reducerSchema("seed_objects", SeedObjectsReducer),
   __reducerSchema("set_flags", SetFlagsReducer),

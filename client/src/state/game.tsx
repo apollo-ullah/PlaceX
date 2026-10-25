@@ -11,6 +11,9 @@ export interface GameActions {
   claim: (objectId: string) => Promise<void>;
   takeover: (objectId: string) => Promise<void>;
   bid: (objectId: string, amount: number) => Promise<void>;
+  listForSale: (objectId: string, askCredits: number) => Promise<void>;
+  cancelListing: (objectId: string) => Promise<void>;
+  buyListing: (objectId: string) => Promise<void>;
   /** Throttled to 5 Hz inside the provider. Safe to call every frame. */
   sendPresence: (targetObjectId: string, x: number, y: number, z: number) => void;
 }
@@ -123,9 +126,15 @@ export function useActions(): GameActions {
 
 const KNOWN_ERRORS: ReducerError[] = [
   'ALREADY_CLAIMED', 'INSUFFICIENT_CREDITS', 'AUCTION_ONLY', 'UNKNOWN_OBJECT', 'NO_PROFILE',
-  'BAD_CALLSIGN', 'BAD_CREW', 'NOT_CLAIMED', 'OWN_OBJECT', 'NO_AUCTION', 'AUCTION_ENDED',
-  'BID_TOO_LOW', 'NOT_ADMIN', 'DISABLED',
+  'BAD_CALLSIGN', 'BAD_CREW', 'NOT_CLAIMED', 'OWN_OBJECT', 'NOT_OWNER', 'NO_AUCTION', 'AUCTION_ENDED',
+  'BID_TOO_LOW', 'ASK_TOO_LOW', 'NOT_FOR_SALE', 'NOT_ADMIN', 'DISABLED',
 ];
+
+/** Rent paid each income tick for one holding (mirrors the server formula). */
+export function rentPerMinute(pricePaid: number, habitableZone: boolean): number {
+  const pct = habitableZone ? 3 : 1;
+  return Math.max(1, Math.floor(pricePaid * pct / 100));
+}
 
 /** Extract a known reducer error code from a rejected action, or null. */
 export function reducerErrorCode(err: unknown): ReducerError | null {

@@ -26,9 +26,12 @@ export const ERROR_COPY: Record<ReducerError, string> = {
   BAD_CREW: 'Pick a crew color to continue.',
   NOT_CLAIMED: 'Nobody owns it yet. Just claim it.',
   OWN_OBJECT: 'That one is already yours.',
+  NOT_OWNER: 'Only the landlord can do that.',
   NO_AUCTION: 'No auction running for this listing.',
   AUCTION_ENDED: 'That auction already closed.',
   BID_TOO_LOW: 'Bid higher. The market is hot.',
+  ASK_TOO_LOW: 'Ask at least the list price.',
+  NOT_FOR_SALE: 'That deed is not on the market.',
   NOT_ADMIN: 'Admins only, sorry.',
   DISABLED: 'That feature is switched off right now.',
 };
@@ -65,6 +68,8 @@ export function tickerParts(e: EventView, byId: Map<string, CelestialObject>): T
     case 'bid': return { actor: e.actorCallsign, verb: 'bid on', object: name, amount: cr, kind: e.kind };
     case 'auction_won': return { actor: e.actorCallsign, verb: 'won the auction for', object: name, amount: cr, kind: e.kind };
     case 'income': return { actor: e.actorCallsign, verb: cr ? `collected ${cr} in rent` : 'collected rent', object: null, amount: null, kind: e.kind };
+    case 'listed': return { actor: e.actorCallsign, verb: 'listed', object: name, amount: cr, kind: e.kind };
+    case 'sale': return { actor: e.actorCallsign, verb: 'bought', object: name, amount: cr, kind: e.kind };
     case 'achievement': return { actor: e.actorCallsign, verb: 'earned', object: ACHIEVEMENT_COPY[e.objectId]?.title ?? prettify(e.objectId || 'an achievement'), amount: null, kind: e.kind };
     case 'join': return { actor: e.actorCallsign, verb: 'just landed', object: null, amount: null, kind: e.kind };
     default: return { actor: e.actorCallsign, verb: e.kind, object: name, amount: cr, kind: e.kind };

@@ -54,6 +54,8 @@ export const Claim = __t.object("Claim", {
   owner: __t.identity(),
   pricePaid: __t.u64(),
   claimedAt: __t.timestamp(),
+  forSale: __t.bool(),
+  askCredits: __t.u64(),
 });
 export type Claim = __Infer<typeof Claim>;
 
