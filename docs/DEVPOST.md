@@ -1,6 +1,36 @@
-# PlaceX: Devpost write-up (draft, stats filled at code freeze)
+# PlaceX — Devpost submission (paste-ready)
 
-**Tagline:** Zillow for the universe, and everyone at Cal Hacks is bidding.
+Use this file as the source of truth when filling the Devpost form. Assets live in `docs/` and `docs/devpost/`.
+
+---
+
+## Form fields (copy/paste)
+
+| Field | Value |
+| --- | --- |
+| **Project name** | PlaceX |
+| **Tagline** (≤60 chars) | Zillow for the universe. Real exoplanets. One owner each. |
+| **Website** | https://claimtheuniverse.vercel.app |
+| **Demo video** | _(record a 60–90s phone or Loom walkthrough — script below)_ |
+| **GitHub repo** | https://github.com/apollo-ullah/PlaceX |
+| **Cover / thumbnail** | `docs/devpost/thumbnail.jpg` (1280×720) |
+| **Gallery** | thumbnail + `docs/devpost/gallery-universe.jpg` + `docs/devpost/devpost-shot-hud.png` + `docs/devpost/devpost-shot-listing.png` + `docs/devpost/devpost-shot-big.png` |
+
+### Built with (tags)
+
+`SpacetimeDB` · `TypeScript` · `React` · `Three.js` · `react-three-fiber` · `Vite` · `Web Audio API` · `Python` · `NASA Exoplanet Archive` · `Vercel` · `Cursor`
+
+### App Store / Play Store
+
+Leave blank (web app).
+
+---
+
+## Elevator pitch (judges, 20 seconds)
+
+PlaceX is Zillow for the real universe: thousands of NASA exoplanets at true 3D positions, priced by physics, one owner each. You claim in SpacetimeDB; the race is a database primary key. Hostile takeovers wage-war the price. No API server.
+
+---
 
 ## Inspiration
 
@@ -11,77 +41,106 @@ Space data is the most spectacular dataset on Earth and almost nobody plays with
 PlaceX is a live multiplayer real estate market for the real universe.
 
 - Fly through real exoplanets at their true 3D positions, with a real star background.
-- Tap any planet for a listing card: price, distance, gravity, temperature, year length, a fun fact (verified for the famous ones), a realtor blurb, and the sound of its atmosphere.
-- Claim it. One owner per object, enforced by the database. A rocket flies from Earth and plants your crew's flag, and the claim appears on every screen at once.
-- Climb the live leaderboard, watch the claim ticker, and defend your planets from hostile takeovers.
-- Earth, the Moon and Mars go up for timed auctions on the big screen.
+- Tap any planet for a listing card: price, distance, gravity, temperature, year length, a fun fact, a realtor blurb, and the sound of its atmosphere.
+- Claim it. One owner per object, enforced by the database. A rocket flies from Earth and plants your crew's flag; the claim appears on every screen at once.
+- Earn passive rent every minute (3% on habitable-zone worlds). List a deed for sale at your ask, or wage war with hostile takeovers at 2× what the owner paid — each snipe doubles again.
+- Climb the live leaderboard, watch the claim ticker, and keep an eye on planets other players are staring at.
+- Earth, the Moon and Mars go up for timed auctions on the big screen (`/big`).
 
 In-game credits only. Prices and sounds are physics-inspired estimates, and the UI says so.
 
+**Try it:** https://claimtheuniverse.vercel.app · **Venue screen:** https://claimtheuniverse.vercel.app/big
+
 ## How we built it
 
-**SpacetimeDB is the whole backend.** One TypeScript module holds the database, the game rules and the real-time sync: tables `celestial_object`, `player`, `claim`, `presence`, `event`, `auction`, `achievement`, `config`, plus two scheduled tables that drive `pay_income` every 60 seconds and `settle_auction` at each auction's end. Every rule lives in a reducer: `set_profile`, `claim_object`, `hostile_takeover`, `place_bid`, `update_presence`, `seed_objects`, `set_flags`, `admin_reset`. Clients subscribe to tables and call reducers; there is no API server.
+**SpacetimeDB is the whole backend.** One TypeScript module holds the database, the game rules and the real-time sync: tables for objects, players, claims, presence, events, auctions, achievements and config, plus scheduled tables that drive rent every 60 seconds and auction settlement. Every rule lives in a reducer. Clients subscribe to tables and call reducers; there is no API server.
 
-**The race condition is a feature.** `claim.object_id` is the primary key. When two hackers tap Claim on the same planet in the same instant, both reducers run as transactions and exactly one insert succeeds. The loser's reducer throws `ALREADY_CLAIMED`, the client catches it, and their screen plays a SNIPED stamp. Measured claim-to-visible latency on a second client: about 4 ms locally and about 140 ms through Maincloud.
+**The race condition is a feature.** `claim.object_id` is the primary key. When two people tap Claim on the same planet in the same instant, both reducers run as transactions and exactly one insert succeeds. The loser gets `ALREADY_CLAIMED` and a SNIPED stamp. Measured claim-to-visible latency: ~4 ms locally, ~140 ms through Maincloud.
 
-**Pricing from physics.** Market value multiplies mass by what the planet is made of:
+**Pricing from physics.** Market value multiplies mass by composition, with bonuses for the habitable zone and rarity. Claim price compresses that into a game economy so most worlds cost a few hundred to ~1,500 credits and everyone starts with 10,000. After a claim, hostile takeovers escalate from what was paid so the market can wage war.
 
-V = M x p_composition x m_habitable x m_rarity
+**Sound from physics.** Space is silent, so we model standing in the atmosphere. Speed of sound from temperature and mean molecular weight; a procedural wind loop pitched and filtered by density. Lava crackles, storms rumble, ice whistles; airless bodies play an orbit tone.
 
-with $/kg of 1,000 for carbon-rich "diamond" worlds, 1.00 for water worlds, 0.50 iron, 0.30 ice giants, 0.20 rocky, 0.10 lava, 0.05 gas giants; 5x in the habitable zone, 3x for record holders, 2x for the Solar System. The claim price compresses that into a game economy:
+**Client.** Vite, React, react-three-fiber. Thousands of planets in one instanced mesh so a phone holds ~60 fps. Scene, UI, audio and state are separate modules behind one hooks contract, with a mock provider so every piece could be built before the backend was live.
 
-P = 100 x (log10 V - 18) x (1 + 50 / (d_ly + 50))
-
-so most planets cost 400 to 1,500 credits, nearby ones up to double, and everyone starts with 10,000.
-
-**Sound from physics.** Space is silent, so we model standing in the atmosphere. Speed of sound v = sqrt(gamma R T / M) with a gas mix per class (H2 and He for gas giants, N2 or CO2 for rocky worlds, rock vapor for lava worlds). A procedural wind loop is pitched by v / 343 m/s and low-passed by atmosphere density; lava worlds crackle, storms rumble, ice worlds whistle, and airless bodies play an orbit tone instead.
-
-**Client.** Vite, React, react-three-fiber. All planets render in a single instanced mesh so a phone holds 60 fps. The scene, UI, audio and state layers are separate modules behind one hooks contract, with a mock provider so every piece could be built before the backend was live.
-
-**Data pipeline.** One Python script queries the archive's TAP endpoint (`pscomppars`), converts RA, Dec and parsecs to light years, fills missing mass or radius with a mass-radius relation (flagged as estimated), classifies by density and temperature, prices, computes sound parameters, and writes `objects.json`, which is seeded into SpacetimeDB.
+**Data pipeline.** Python hits the NASA archive TAP endpoint (`pscomppars`), converts sky coordinates to light years, fills missing mass/radius with a mass–radius relation (flagged as estimated), classifies, prices, computes sound parameters, and writes `objects.json` for seeding.
 
 ## Built in Cursor with agents
 
-The whole project was built in Cursor's integrated terminal. Claude Code ran as the lead engineer: it set up the toolchain, wrote the shared contracts (types, SpacetimeDB schema, generated bindings, React hooks), then dispatched five subagents in parallel git worktrees (backend, data pipeline, 3D scene, UI, audio), reviewed and merged their branches, deployed, and kept the build log. Humans worked in Cursor's agent on copy, mobile polish and bug fixes from `docs/CURSOR_TASKS.md`. The full timeline is in `docs/BUILD_LOG.md`.
+The project was built in Cursor. Claude Code led: contracts first (types, schema, bindings, hooks), then parallel subagents in git worktrees (backend, data, 3D, UI, audio), merge, deploy, build log. Humans steered copy, mobile polish, player market and wage-war fixes. Full timeline: `docs/BUILD_LOG.md`.
 
-## Challenges
+## Challenges we ran into
 
-- Freezing interfaces before parallel work. Five agents only work if the contract is fixed first, so the first 45 minutes went to types, schema and hooks, with stubs so `main` always built.
-- Keeping 6,000 objects smooth on a phone: one instanced mesh, per-instance colors updated in place, full spheres only for the selected system.
-- Honest estimates. Every filled-in value is flagged, every fact says whether it was verified, and the sound card says plainly that space is silent.
+- Freezing interfaces before parallel work — five agents only work if the contract is fixed first.
+- Keeping ~6,000 objects smooth on a phone: one instanced mesh, per-instance colors updated in place.
+- Honest estimates: every filled-in value is flagged; the sound card says space is silent.
+- Economy edge cases: takeovers had to escalate from price paid (and respect open asks) so a listing could not be undercut by a cheap snipe.
 
-## Accomplishments
+## Accomplishments that we're proud of
 
 - A live shared universe with real players before judging.
-- Real concurrency control that doubles as a demo moment.
+- Real concurrency control that doubles as a demo moment (SNIPED).
 - Physics you can explain to a judge in one breath.
+- Zero traditional backend — SpacetimeDB is the server.
 
 ## What we learned
 
-SpacetimeDB removes an entire tier. No API server, no socket layer, no cache invalidation. Reducers plus subscriptions were enough for a real-time game with hundreds of players.
+SpacetimeDB removes an entire tier. No API server, no socket layer, no cache invalidation. Reducers plus subscriptions were enough for a real-time game. Parallel agents only work if you write the contract first and keep `main` green.
 
-## What's next
+## What's next for PlaceX
 
-Crews with territory, shareable deed cards, more solar systems, and a classroom mode where a teacher opens a system and students claim what they can explain.
+Crews with territory, shareable deed cards, more Solar System depth, and a classroom mode where a teacher opens a system and students claim what they can explain.
 
 ## Data sources
 
-- NASA Exoplanet Archive, `pscomppars` table via TAP: https://exoplanetarchive.ipac.caltech.edu/
-- HYG star database (background stars): https://github.com/astronexus/HYG-Database
-- Solar System values from NASA planetary fact sheets.
+- NASA Exoplanet Archive, `pscomppars` via TAP: https://exoplanetarchive.ipac.caltech.edu/
+- HYG star database (background stars)
+- Solar System values from NASA planetary fact sheets
 
-## Live stats at code freeze
-
-_(filled from the database at 7:30 AM)_
+## Live stats (snapshot ~2:20 AM PT, Oct 25, 2026)
 
 | Metric | Value |
 | --- | --- |
-| Unique players | |
-| Objects claimed | |
-| Peak concurrent | |
-| Takeovers | |
-| Who owns Earth | |
+| Named players in DB | 4 |
+| Objects claimed | 17 |
+| Hostile takeovers (event log) | 2 |
+| Who owns Earth | unclaimed (auction-only) |
+| Peak concurrent | _(fill from venue / Vercel analytics at freeze)_ |
+
+_Refresh before submit:_
+
+```bash
+spacetime sql placex "SELECT COUNT(*) AS n FROM claim" --server maincloud
+spacetime sql placex "SELECT COUNT(*) AS n FROM player WHERE callsign != ''" --server maincloud
+```
 
 ## Disclaimer
 
 In-game credits only. No real property, money or crypto. Prices and sounds are physics-inspired estimates for fun and learning.
+
+---
+
+## Demo video script (~75 seconds)
+
+1. **0–10s** — Landing: “Zillow for the universe.” Pick a callsign, pick a crew, enter.
+2. **10–25s** — Teleport / fly. Open a listing. Point at physics chips + fun fact. Hit Claim. Show rocket + flag.
+3. **25–40s** — Second browser / phone: same planet shows owned. Try Claim → SNIPED. Mention SpacetimeDB primary key.
+4. **40–55s** — Hostile takeover / list for sale. Rent ticker. Leaderboard.
+5. **55–75s** — `/big` venue screen + QR. “No API server. Just SpacetimeDB.” End on URL.
+
+Record with Loom or QuickTime; upload to YouTube unlisted and paste the link on Devpost.
+
+---
+
+## Submission checklist
+
+- [ ] Create Devpost project under the Cal Hacks 13.0 hackathon
+- [ ] Paste name, tagline, website, GitHub
+- [ ] Upload cover: `docs/devpost/thumbnail.jpg`
+- [ ] Upload 3–5 gallery images from `docs/devpost/`
+- [ ] Paste Inspiration → What's next sections from this file
+- [ ] Add Built With tags
+- [ ] Record + link demo video
+- [ ] Refresh live stats at code freeze
+- [ ] Submit / mark finished before the deadline
+- [ ] Confirm repo is **public** (already switched for Devpost)
