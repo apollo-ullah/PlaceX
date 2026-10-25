@@ -1,0 +1,15 @@
+{
+  "name": "placex",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "seed:local": "node scripts/seed.mjs --server local",
+    "seed:cloud": "node scripts/seed.mjs --server maincloud",
+    "smoke:local": "tsx scripts/smoke.ts ws://127.0.0.1:3000 placex-local",
+    "smoke:cloud": "tsx scripts/smoke.ts wss://maincloud.spacetimedb.com placex"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.0"
+  }
+}

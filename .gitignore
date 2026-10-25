@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.vercel/
+.env
+.env.local
+*.log
+spacetime.local.json
+.DS_Store
+pipeline/.cache/
+pipeline/raw/
+__pycache__/
+.venv/

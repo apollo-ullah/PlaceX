@@ -1,0 +1,134 @@
+// Mock provider: same contract as LiveProvider, backed by local state and objects.json.
+// Lets UI, scene and audio agents work before the backend is live. Enable with VITE_MOCK=1.
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { GameContext, type GameActions, type GameState } from './game';
+import { useObjectsStore } from './objects';
+import type { ClaimView, Crew, EventView, PlayerView, PresenceView } from '../types';
+import { CREW_IDS, STARTING_CREDITS, TAKEOVER_MULT } from '../types';
+
+const ME = 'c200ffffffffffffffffffffffffffffffffffffffffffffffffffffffff0001';
+const BOT_NAMES = ['ady', 'nova', 'kepler', 'ziggy', 'orbit', 'luna', 'quasar', 'pixel'];
+
+function bot(i: number): PlayerView {
+  return {
+    identity: `c200bot${i.toString(16).padStart(56, '0')}`,
+    callsign: BOT_NAMES[i % BOT_NAMES.length],
+    crew: CREW_IDS[i % CREW_IDS.length],
+    credits: STARTING_CREDITS - 1200 * (i + 1),
+    portfolioValue: 1200 * (i + 1),
+    claimCount: i + 1,
+    online: i % 3 !== 0,
+    joinedAt: Date.now() - i * 60_000,
+  };
+}
+
+export function MockProvider({ children }: { children: ReactNode }) {
+  const { list, byId, loaded } = useObjectsStore();
+  useEffect(() => { void useObjectsStore.getState().load(); }, []);
+
+  const [me, setMe] = useState<PlayerView>({
+    identity: ME, callsign: '', crew: 'blue', credits: STARTING_CREDITS,
+    portfolioValue: 0, claimCount: 0, online: true, joinedAt: Date.now(),
+  });
+  const [bots, setBots] = useState<PlayerView[]>(() => Array.from({ length: 8 }, (_, i) => bot(i)));
+  const [claims, setClaims] = useState<Map<string, ClaimView>>(new Map());
+  const [events, setEvents] = useState<EventView[]>([]);
+  const [presence, setPresence] = useState<PresenceView[]>([]);
+  const seeded = useRef(false);
+
+  const push = useCallback((e: Omit<EventView, 'id' | 'ts'>) => {
+    setEvents(prev => [{ ...e, id: String(Date.now() + Math.random()), ts: Date.now() }, ...prev].slice(0, 200));
+  }, []);
+
+  // Seed some bot claims and keep a slow trickle going so the ticker moves.
+  useEffect(() => {
+    if (!loaded || seeded.current || list.length === 0) return;
+    seeded.current = true;
+    const claimable = list.filter(o => !o.auctionOnly);
+    const pick = () => claimable[Math.floor(Math.random() * claimable.length)];
+    const botClaim = () => {
+      const o = pick();
+      const b = bots[Math.floor(Math.random() * bots.length)];
+      setClaims(prev => {
+        if (prev.has(o.id)) return prev;
+        const next = new Map(prev);
+        next.set(o.id, { objectId: o.id, owner: b.identity, ownerCallsign: b.callsign, ownerCrew: b.crew, pricePaid: o.priceCredits, claimedAt: Date.now() });
+        return next;
+      });
+      push({ kind: 'claim', actor: b.identity, actorCallsign: b.callsign, objectId: o.id, amount: o.priceCredits });
+    };
+    for (let i = 0; i < 12; i++) botClaim();
+    const id = setInterval(botClaim, 6000);
+    const pid = setInterval(() => {
+      setPresence(bots.filter(b => b.online).map(b => {
+        const o = pick();
+        return { identity: b.identity, callsign: b.callsign, crew: b.crew, targetObjectId: o.id, x: o.x, y: o.y, z: o.z, updatedAt: Date.now() };
+      }));
+    }, 4000);
+    return () => { clearInterval(id); clearInterval(pid); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded, list.length]);
+
+  const actions = useMemo<GameActions>(() => ({
+    setProfile: async (callsign, crew: Crew) => {
+      const clean = callsign.trim();
+      if (clean.length < 2 || clean.length > 16) throw new Error('BAD_CALLSIGN');
+      setMe(m => ({ ...m, callsign: clean, crew }));
+      push({ kind: 'join', actor: ME, actorCallsign: clean, objectId: '', amount: 0 });
+    },
+    claim: async objectId => {
+      const o = byId.get(objectId);
+      if (!o) throw new Error('UNKNOWN_OBJECT');
+      if (!me.callsign) throw new Error('NO_PROFILE');
+      if (o.auctionOnly) throw new Error('AUCTION_ONLY');
+      if (claims.has(objectId)) throw new Error('ALREADY_CLAIMED');
+      if (me.credits < o.priceCredits) throw new Error('INSUFFICIENT_CREDITS');
+      await new Promise(r => setTimeout(r, 120));
+      setClaims(prev => new Map(prev).set(objectId, { objectId, owner: ME, ownerCallsign: me.callsign, ownerCrew: me.crew, pricePaid: o.priceCredits, claimedAt: Date.now() }));
+      setMe(m => ({ ...m, credits: m.credits - o.priceCredits, portfolioValue: m.portfolioValue + o.priceCredits, claimCount: m.claimCount + 1 }));
+      push({ kind: 'claim', actor: ME, actorCallsign: me.callsign, objectId, amount: o.priceCredits });
+    },
+    takeover: async objectId => {
+      const o = byId.get(objectId);
+      const c = claims.get(objectId);
+      if (!o) throw new Error('UNKNOWN_OBJECT');
+      if (!c) throw new Error('NOT_CLAIMED');
+      if (c.owner === ME) throw new Error('OWN_OBJECT');
+      const cost = o.priceCredits * TAKEOVER_MULT;
+      if (me.credits < cost) throw new Error('INSUFFICIENT_CREDITS');
+      await new Promise(r => setTimeout(r, 120));
+      setClaims(prev => new Map(prev).set(objectId, { objectId, owner: ME, ownerCallsign: me.callsign, ownerCrew: me.crew, pricePaid: cost, claimedAt: Date.now() }));
+      setMe(m => ({ ...m, credits: m.credits - cost, portfolioValue: m.portfolioValue + cost, claimCount: m.claimCount + 1 }));
+      setBots(bs => bs.map(b => b.identity === c.owner ? { ...b, credits: b.credits + cost, claimCount: Math.max(0, b.claimCount - 1) } : b));
+      push({ kind: 'takeover', actor: ME, actorCallsign: me.callsign, objectId, amount: cost });
+    },
+    bid: async () => { throw new Error('DISABLED'); },
+    sendPresence: () => { /* no-op in mock */ },
+  }), [byId, claims, me, push]);
+
+  const players = useMemo(() => [me, ...bots], [me, bots]);
+
+  const value = useMemo<GameState>(() => ({
+    mode: 'mock',
+    connected: true,
+    connectionError: null,
+    identity: ME,
+    me,
+    hasProfile: me.callsign.length > 0,
+    players,
+    claims,
+    events,
+    presence,
+    auctions: [],
+    achievements: [],
+    stats: {
+      players: players.length,
+      online: players.filter(p => p.online).length,
+      claims: claims.size,
+      totalValue: [...claims.values()].reduce((s, c) => s + c.pricePaid, 0),
+    },
+    actions,
+  }), [me, players, claims, events, presence, actions]);
+
+  return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
+}

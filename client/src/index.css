@@ -1,0 +1,21 @@
+/* Base reset and tokens. The UI agent owns the visual system in src/ui; keep this minimal. */
+:root {
+  --bg: #000000;
+  --fg: #f4f4f5;
+  --muted: #9a9aa3;
+  --gold: #ffd54a;
+  --font-ui: "Inter", "SF Pro Display", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body, #root { margin: 0; height: 100%; width: 100%; overflow: hidden; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  touch-action: none;
+  overscroll-behavior: none;
+}
+button { font: inherit; }

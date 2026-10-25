@@ -26,3 +26,25 @@ Checked and installed:
 Decisions:
 - Server in TypeScript so the repo is one language. SDK package `spacetimedb@2.13.0` provides `spacetimedb/server` for the module and `spacetimedb/react` (`SpacetimeDBProvider`, `useTable`, `useReducer`) for the client.
 - Reducer errors thrown as `SenderError('CODE')` reach the client as a rejected promise whose message is the code. That is how `ALREADY_CLAIMED` and friends drive the SNIPED animation.
+
+## Phase 1: contracts (23:10 to 23:45)
+
+Lead wrote and committed the interfaces every agent builds against:
+
+- `client/src/types.ts`: `CelestialObject` (objects.json contract), crews, error codes, plain view types.
+- `server/src/index.ts`: full schema (celestial_object, player, claim, presence, event, auction, achievement, config, income_schedule, auction_schedule) and every reducer signature. Lifecycle, `set_profile`, `claim_object`, `update_presence`, `seed_objects`, `set_flags`, `admin_reset` implemented; `hostile_takeover`, `place_bid`, `pay_income`, `settle_auction` are TODO(backend).
+- `client/src/bindings/`: generated with `spacetime generate` from the published module.
+- `client/src/state/`: `LiveProvider` (SpacetimeDB) and `MockProvider` (fake data from objects.json) behind one `GameProvider`; hooks `useConnection`, `usePlayer`, `useClaims`, `useLeaderboard`, `useEvents`, `usePresence`, `useAuctions`, `useStats`, `useActions`; `useSceneStore` bridge between the 3D scene and the UI; `reducerErrorCode()` helper.
+- Stubs in `scene/`, `ui/`, `audio/` so `main` builds before the agents land.
+- `client/public/data/objects.json`: 8-object placeholder (Earth, Moon, Mars, Jupiter, Proxima Cen b, TRAPPIST-1 e, WASP-76 b, KELT-9 b) with published values, priced by the PRD formulas. The data agent replaces it.
+- `scripts/seed.mjs` (chunked `spacetime call seed_objects`) and `scripts/smoke.ts` (two clients, claim, race, auction-only).
+
+Verified:
+- Local: smoke pass, claim visible on the second client in 4 ms, race rejected with ALREADY_CLAIMED.
+- Cloud: module published to Maincloud as database `placex` (dashboard https://spacetimedb.com/placex), seeded, smoke pass at 142 ms claim-to-visible from this laptop.
+
+Decisions:
+- The client never subscribes to `celestial_object`; it reads objects.json. The table exists for server-side price validation.
+- Admin is whoever published the module (stored in `config` on init), not a hardcoded hex.
+- `event` is a normal table pruned to 200 rows in reducers, so the ticker has history on load.
+- Scheduled reducers are gated by `config.incomeEnabled` and `config.auctionsEnabled` so they ship disabled and get flipped with `set_flags`.
