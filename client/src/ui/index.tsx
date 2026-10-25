@@ -3,7 +3,8 @@
 //   <Shell big />         venue display: stats, ticker, leaderboard, QR slot.
 // The .px-root layer is pointer-events: none so taps fall through to the scene; each child re-enables them.
 import './ui.css';
-import { useHasProfile, useSelectedObjectId } from '../state';
+import { useCallback, useEffect, useState } from 'react';
+import { useHasProfile, useSceneStore, useSelectedObjectId } from '../state';
 import { ToastProvider } from './Toast';
 import { Landing } from './Landing';
 import { ConnectionPill, Credits, Search, Teleport } from './Hud';
@@ -11,6 +12,7 @@ import { Leaderboard } from './Leaderboard';
 import { Ticker } from './Ticker';
 import { ListingCard } from './ListingCard';
 import { BigScreen } from './BigScreen';
+import { AchievementToasts, Portfolio, TakeoverBanner } from './Extras';
 
 export function Shell({ big = false }: { big?: boolean }) {
   return (
@@ -23,13 +25,20 @@ export function Shell({ big = false }: { big?: boolean }) {
 function Explorer() {
   const hasProfile = useHasProfile();
   const selectedId = useSelectedObjectId();
+  const select = useSceneStore(s => s.select);
+  const [portfolio, setPortfolio] = useState(false);
+  const closePortfolio = useCallback(() => setPortfolio(false), []);
+
+  // Opening a listing closes the portfolio, and vice versa, so the two sheets never stack.
+  useEffect(() => { if (selectedId) setPortfolio(false); }, [selectedId]);
+  const openPortfolio = useCallback(() => { select(null); setPortfolio(true); }, [select]);
 
   if (!hasProfile) return <div className="px-root"><Landing /></div>;
 
   return (
-    <div className={`px-root ${selectedId ? 'px-root--card' : ''}`}>
+    <div className={`px-root ${selectedId || portfolio ? 'px-root--card' : ''}`}>
       <div className="px-hud-top">
-        <Credits />
+        <Credits onOpenPortfolio={openPortfolio} />
         <Search />
         <Leaderboard />
       </div>
@@ -40,6 +49,9 @@ function Explorer() {
       </div>
       <ConnectionPill />
       <ListingCard />
+      <Portfolio open={portfolio} onClose={closePortfolio} />
+      <TakeoverBanner />
+      <AchievementToasts />
     </div>
   );
 }

@@ -535,7 +535,7 @@
   z-index: 11;
 }
 .px-portfolio--open { transform: translateY(0); opacity: 1; }
-.px-portfolio__head { display: flex; align-items: flex-end; justify-content: space-between; padding: 8px 18px 10px; gap: 12px; }
+.px-portfolio__head { display: flex; align-items: flex-end; justify-content: space-between; padding: 8px 64px 10px 18px; gap: 12px; }
 .px-portfolio__head h3 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
 .px-portfolio__head p { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
 .px-portfolio__total { text-align: right; }
