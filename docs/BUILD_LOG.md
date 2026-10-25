@@ -77,14 +77,14 @@ race, and scripts/load.ts (refuses to target the live database). Lead verified: 
 typecheck, tests, local republish, seed, smoke pass, client build. Bindings unchanged.
 Note for UI: event kind `achievement` carries the achievement kind in `objectId`.
 
-### 00:40 merged Agent E (audio) into main
+### 00:22 merged Agent E (audio) into main
 
 Procedural Web Audio engine: looped noise wind pitched by `pitchRatio`, low-pass from density,
 layers for lava, storm, ice, and an orbit tone for airless bodies; crossfades, iOS resume handling,
 mic pitch shifter ("hear your voice there"), and a DevPanel mounted behind `?audio=1`. Verified by
 the agent with a headless Chrome harness measuring output spectra and envelopes.
 
-### 00:45 Agent A final: live database republished, load test done
+### 00:25 Agent A final: live database republished, load test done
 
 Live `placex` on Maincloud republished with the full backend and reset clean (flags off). Cloud
 smoke: ack 109 ms, visible 109 ms. Load test on `placex-staging`: 150 clients for 5 minutes,
@@ -93,7 +93,7 @@ a 13 claims per second burst (single-process harness decoding 150 sockets inflat
 for 60 seconds: p50 134 ms, p95 455 ms. Auction schedule when enabled: Mars 08:00, Moon 08:20,
 Earth 08:40 PT. Auction-only objects cannot be taken over, so the Earth winner keeps it.
 
-### 00:58 merged Agent B (data) and Agent D (UI) into main
+### 00:27 merged Agent B (data) and Agent D (UI) into main
 
 Data: `pipeline/build.py` pulls `pscomppars` from the NASA Exoplanet Archive TAP endpoint, converts
 to light years, fills 23 masses and 42 radii with a documented mass-radius relation (flagged
@@ -109,7 +109,7 @@ price breakdown, stat chips with "est.", verified badge, Play sound, Claim, Host
 and CLAIMED stamps, shake on INSUFFICIENT_CREDITS, `/big` mode with stats bar and QR slot, portfolio
 drawer, takeover banner, achievement toasts. Verified by the agent at 390 px and 1440 px.
 
-### 01:00 live site redeployed with real data, UI and audio
+### 00:29 live site redeployed with real data, UI and audio
 
 https://claimtheuniverse.vercel.app serves 6,430 objects with the full UI (scene still the stub until
 Agent C lands). Verified in headless Chrome through the DevTools Protocol (`scripts/probe.mjs`):
@@ -117,7 +117,7 @@ WebSocket to `wss://maincloud.spacetimedb.com/v1/database/placex/subscribe` hand
 assigned, landing shows the Enter button enabled. Note for later probes: `--virtual-time-budget`
 starves WebSockets and shows a false "Connecting"; use the CDP probe instead.
 
-### 01:20 merged Agent C (3D scene) into main; all five P0 branches are in
+### 00:33 merged Agent C (3D scene) into main; all five P0 branches are in
 
 Scene: one InstancedMesh of billboarded glow quads for all 6,430 objects, per-instance crew colors
 patched incrementally, HYG stars on a sky sphere, radial log compression `30 * ln(1 + r/10)` plus a
@@ -130,7 +130,7 @@ focus) and `SceneBoundary` so the UI survives when WebGL is unavailable (found b
 probe: without the boundary a WebGL failure blanked the whole app). `scripts/probe.mjs` now uses
 SwiftShader so it can render WebGL; `scripts/e2e.mjs` drives a real claim through the UI.
 
-## 01:35 v1 LIVE (90 minutes ahead of the 3:00 AM deadline)
+## 00:35 v1 LIVE (2 hours 25 minutes ahead of the 3:00 AM deadline)
 
 https://claimtheuniverse.vercel.app (big screen: /big). Full stack on main: 6,430 real objects,
 instanced 3D universe, listing card with real data, claim with server-side race protection, live
