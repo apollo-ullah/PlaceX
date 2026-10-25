@@ -116,3 +116,16 @@ Agent C lands). Verified in headless Chrome through the DevTools Protocol (`scri
 WebSocket to `wss://maincloud.spacetimedb.com/v1/database/placex/subscribe` handshake 101, identity
 assigned, landing shows the Enter button enabled. Note for later probes: `--virtual-time-budget`
 starves WebSockets and shows a false "Connecting"; use the CDP probe instead.
+
+### 01:20 merged Agent C (3D scene) into main; all five P0 branches are in
+
+Scene: one InstancedMesh of billboarded glow quads for all 6,430 objects, per-instance crew colors
+patched incrementally, HYG stars on a sky sphere, radial log compression `30 * ln(1 + r/10)` plus a
+sibling ring per system (`scene/layout.ts`), touch orbit, tap select, flyTo easing, fov-stretch
+teleport warp, Earth-to-target claim rocket with flag and ripple, procedural ShaderMaterial for all 11
+classes in the system view, presence ghosts, 50 ly territory halos, `?debug=1` overlay and
+`window.__placex` hook. Agent measured 60 fps in real Chrome at 390x844 dpr 2 with 6,000 objects.
+Lead added `state/effects.tsx` (claim ripple on other players' claims, presence sync from scene
+focus) and `SceneBoundary` so the UI survives when WebGL is unavailable (found by the headless
+probe: without the boundary a WebGL failure blanked the whole app). `scripts/probe.mjs` now uses
+SwiftShader so it can render WebGL; `scripts/e2e.mjs` drives a real claim through the UI.

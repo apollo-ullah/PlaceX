@@ -4,7 +4,7 @@ import { spawn } from 'node:child_process';
 const [url, secs = '15'] = process.argv.slice(2);
 const CH = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const port = 9333;
-const chrome = spawn(CH, ['--headless=new', '--disable-gpu', '--no-sandbox', `--remote-debugging-port=${port}`, '--user-data-dir=/tmp/cdp-probe-profile-' + Date.now(), 'about:blank'], { stdio: 'ignore' });
+const chrome = spawn(CH, ['--headless=new', '--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', `--remote-debugging-port=${port}`, '--user-data-dir=/tmp/cdp-probe-profile-' + Date.now(), 'about:blank'], { stdio: 'ignore' });
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 let targets = [];
 for (let i = 0; i < 30 && targets.length === 0; i++) { await sleep(300); try { targets = (await (await fetch(`http://127.0.0.1:${port}/json`)).json()).filter(t => t.type === 'page'); } catch {} }
