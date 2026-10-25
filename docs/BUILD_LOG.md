@@ -108,3 +108,11 @@ UI: landing, HUD (credits, search, Teleport, leaderboard, ticker), bottom-sheet 
 price breakdown, stat chips with "est.", verified badge, Play sound, Claim, Hostile takeover, SNIPED
 and CLAIMED stamps, shake on INSUFFICIENT_CREDITS, `/big` mode with stats bar and QR slot, portfolio
 drawer, takeover banner, achievement toasts. Verified by the agent at 390 px and 1440 px.
+
+### 01:00 live site redeployed with real data, UI and audio
+
+https://claimtheuniverse.vercel.app serves 6,430 objects with the full UI (scene still the stub until
+Agent C lands). Verified in headless Chrome through the DevTools Protocol (`scripts/probe.mjs`):
+WebSocket to `wss://maincloud.spacetimedb.com/v1/database/placex/subscribe` handshake 101, identity
+assigned, landing shows the Enter button enabled. Note for later probes: `--virtual-time-budget`
+starves WebSockets and shows a false "Connecting"; use the CDP probe instead.
