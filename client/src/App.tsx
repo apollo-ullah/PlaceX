@@ -3,6 +3,7 @@
 import { Routes, Route } from 'react-router-dom';
 import { GameProvider, ClaimEffects, PresenceSync } from './state';
 import { Scene } from './scene';
+import { SceneBoundary } from './SceneBoundary';
 import { Shell } from './ui';
 import { lazy, Suspense } from 'react';
 
@@ -23,7 +24,7 @@ export default function App() {
 function Explorer({ big = false }: { big?: boolean }) {
   return (
     <div style={{ position: 'fixed', inset: 0 }}>
-      <Scene />
+      <SceneBoundary><Scene /></SceneBoundary>
       <ClaimEffects />
       <PresenceSync />
       <Shell big={big} />
