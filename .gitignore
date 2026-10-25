@@ -10,3 +10,4 @@ pipeline/.cache/
 pipeline/raw/
 __pycache__/
 .venv/
+.claude/worktrees/
