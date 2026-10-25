@@ -74,7 +74,7 @@ export function Search() {
             if (e.key === 'Escape') { setQ(''); inputRef.current?.blur(); }
             if (e.key === 'Enter' && results[0]) pick(results[0].id);
           }}
-          placeholder="Search a planet or star"
+          placeholder="Find a planet"
           aria-label="Search planets"
           autoComplete="off"
           autoCorrect="off"

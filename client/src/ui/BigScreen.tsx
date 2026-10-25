@@ -1,8 +1,9 @@
 // /big: venue display. Stats bar, full-height ticker, leaderboard, QR slot. No landing, no card.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatCredits, useEvents, useObjects, useStats } from '../state';
 import { LeaderboardPanel } from './Leaderboard';
 import { TickerLine } from './Ticker';
+import { isTickerEvent } from './format';
 
 function Num({ n, label, gold = false }: { n: number; label: string; gold?: boolean }) {
   return (
@@ -15,7 +16,8 @@ function Num({ n, label, gold = false }: { n: number; label: string; gold?: bool
 
 export function BigScreen() {
   const stats = useStats();
-  const events = useEvents(40);
+  const all = useEvents(100);
+  const events = useMemo(() => all.filter(isTickerEvent).slice(0, 40), [all]);
   const { byId } = useObjects();
   const [tab, setTab] = useState<'value' | 'count'>('value');
   const [qrOk, setQrOk] = useState(true);

@@ -49,17 +49,23 @@ export interface TickerParts {
   kind: EventView['kind'];
 }
 
+/** Events worth a ticker line. Income fires once a minute per online player, so it is skipped. */
+export function isTickerEvent(e: EventView): boolean {
+  return e.kind !== 'income';
+}
+
 /** One ticker line: "ady claimed WASP-76 b for 852 cr". */
 export function tickerParts(e: EventView, byId: Map<string, CelestialObject>): TickerParts {
-  const name = e.objectId ? objectName(byId, e.objectId) : null;
+  // Lead convention: `achievement` events carry the achievement kind in objectId, `income` has no objectId.
+  const name = e.objectId && e.kind !== 'achievement' ? objectName(byId, e.objectId) : null;
   const cr = e.amount ? `${formatCredits(e.amount)} cr` : null;
   switch (e.kind) {
     case 'claim': return { actor: e.actorCallsign, verb: 'claimed', object: name, amount: cr, kind: e.kind };
     case 'takeover': return { actor: e.actorCallsign, verb: 'took over', object: name, amount: cr, kind: e.kind };
     case 'bid': return { actor: e.actorCallsign, verb: 'bid on', object: name, amount: cr, kind: e.kind };
     case 'auction_won': return { actor: e.actorCallsign, verb: 'won the auction for', object: name, amount: cr, kind: e.kind };
-    case 'income': return { actor: e.actorCallsign, verb: 'collected rent', object: null, amount: cr, kind: e.kind };
-    case 'achievement': return { actor: e.actorCallsign, verb: 'earned an achievement', object: null, amount: null, kind: e.kind };
+    case 'income': return { actor: e.actorCallsign, verb: cr ? `collected ${cr} in rent` : 'collected rent', object: null, amount: null, kind: e.kind };
+    case 'achievement': return { actor: e.actorCallsign, verb: 'earned', object: ACHIEVEMENT_COPY[e.objectId]?.title ?? prettify(e.objectId || 'an achievement'), amount: null, kind: e.kind };
     case 'join': return { actor: e.actorCallsign, verb: 'just landed', object: null, amount: null, kind: e.kind };
     default: return { actor: e.actorCallsign, verb: e.kind, object: name, amount: cr, kind: e.kind };
   }

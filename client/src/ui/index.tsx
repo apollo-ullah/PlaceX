@@ -31,9 +31,8 @@ function Explorer() {
       <div className="px-hud-top">
         <Credits />
         <Search />
-        <span />
+        <Leaderboard />
       </div>
-      <Leaderboard />
       <div className="px-hud-bottom">
         <Ticker />
         <Teleport />

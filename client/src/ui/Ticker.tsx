@@ -1,7 +1,8 @@
 // Live ticker: newest event at the top.
+import { useMemo } from 'react';
 import { useConnection, useEvents, useObjects } from '../state';
 import type { CelestialObject, EventView } from '../types';
-import { tickerParts } from './format';
+import { isTickerEvent, tickerParts } from './format';
 
 export function TickerLine({ e, byId, me, big = false, fresh = false }: { e: EventView; byId: Map<string, CelestialObject>; me: string | null; big?: boolean; fresh?: boolean }) {
   const p = tickerParts(e, byId);
@@ -15,7 +16,8 @@ export function TickerLine({ e, byId, me, big = false, fresh = false }: { e: Eve
 }
 
 export function Ticker() {
-  const events = useEvents(30);
+  const all = useEvents(80);
+  const events = useMemo(() => all.filter(isTickerEvent).slice(0, 30), [all]);
   const { byId } = useObjects();
   const { identity } = useConnection();
   return (

@@ -48,7 +48,7 @@ export function Leaderboard() {
   const rows = useLeaderboard('value', 1);
   const leader = rows[0];
   return (
-    <>
+    <div style={{ position: 'relative', justifySelf: 'end' }}>
       <button
         type="button"
         className={`px-glass px-btn px-lb-toggle ${open ? 'px-btn--pressed' : ''}`}
@@ -63,6 +63,6 @@ export function Leaderboard() {
       <div className={`px-glass px-lb ${open ? '' : 'px-lb--closed'}`} aria-hidden={!open}>
         <LeaderboardPanel tab={tab} onTab={setTab} />
       </div>
-    </>
+    </div>
   );
 }
