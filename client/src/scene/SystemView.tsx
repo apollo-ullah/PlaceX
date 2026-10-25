@@ -7,7 +7,7 @@ import {
   ShaderMaterial, SphereGeometry, Vector3,
 } from 'three';
 import { useObjects, useSceneStore } from '../state';
-import type { CelestialObject } from '../types';
+import { HABITABLE, type CelestialObject } from '../types';
 import { getLayout, systemCenter, visualRadius, worldPosition } from './layout';
 import { makePlanetMaterial } from './planetShader';
 import { IS_MOBILE } from './bus';
@@ -98,13 +98,24 @@ export function SystemView() {
     return { pos: worldPosition(o, hovPos), radius: visualRadius(o) };
   };
 
+  const habitable = useMemo(() => siblings.filter(o => o.habitableZone), [siblings]);
+
   return (
     <group ref={group}>
       {siblings.map(o => (
         <Planet key={o.id} obj={o} selected={o.id === selectedId} lightPos={center} />
       ))}
       {selected && !hasStar && <HostStar center={center} />}
-      <Ring getTarget={selTarget} color="#ffd54a" opacity={0.9} />
+      {/* Soft mint ring on every habitable-zone world in the open system. */}
+      {habitable.map(o => (
+        <Ring
+          key={`hz-${o.id}`}
+          color={HABITABLE}
+          opacity={o.id === selectedId ? 0.35 : 0.55}
+          getTarget={() => ({ pos: worldPosition(o, hzPos), radius: visualRadius(o) * 1.15 })}
+        />
+      ))}
+      <Ring getTarget={selTarget} color={selected?.habitableZone ? HABITABLE : '#ffd54a'} opacity={0.9} />
       {!IS_MOBILE && <Ring getTarget={hovTarget} color="#ffffff" opacity={0.45} />}
     </group>
   );
@@ -112,3 +123,4 @@ export function SystemView() {
 
 const selPos = new Vector3();
 const hovPos = new Vector3();
+const hzPos = new Vector3();

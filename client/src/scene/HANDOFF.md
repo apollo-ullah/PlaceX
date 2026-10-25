@@ -13,7 +13,8 @@ zustand 5. The type import from `three-stdlib` (drei's dependency) is types only
   to a deterministic procedural field of 5,000 stars biased toward the real galactic plane when
   the file is missing or not JSON (Vercel SPA rewrites return HTML, which is handled).
 - Objects (`Objects.tsx`): all catalog objects in one `InstancedMesh` of billboarded glow quads
-  with a custom shader. Per-instance colour: unclaimed `UNCLAIMED`, claimed `CREWS[crew].color`,
+  with a custom shader. Per-instance colour: unclaimed `UNCLAIMED`, unclaimed habitable-zone
+  `HABITABLE` (mint + soft pulse), claimed `CREWS[crew].color`,
   own planets pulse `GOLD` (scale and brightness, driven by a per-instance `aPulse` attribute).
   Colours are patched incrementally from `useClaims()` and `usePlayer()` (only changed instances
   are written); the mesh is rebuilt only when the catalog list changes. Glows are clamped between

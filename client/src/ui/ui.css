@@ -451,8 +451,13 @@
 .px-card__title p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
 .px-card__title p b { color: var(--fg-dim); font-weight: 500; }
 .px-card__tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.px-tag--hz {
+  background: rgba(126, 240, 208, 0.16);
+  color: #9affe0;
+  border: 1px solid rgba(126, 240, 208, 0.45);
+  box-shadow: 0 0 16px rgba(126, 240, 208, 0.25);
+}
 .px-tag { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; padding: 4px 8px; border-radius: 6px; background: rgba(255,255,255,0.08); color: var(--fg-dim); }
-.px-tag--hz { background: rgba(77, 255, 136, 0.14); color: var(--ok); }
 .px-tag--auction { background: rgba(255, 213, 74, 0.14); color: var(--gold); }
 
 .px-price { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding: 12px 0 6px; border-top: 1px solid var(--glass-border); }

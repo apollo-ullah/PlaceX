@@ -9,7 +9,7 @@ import {
   PlaneGeometry, ShaderMaterial, Vector3,
 } from 'three';
 import { useClaims, useObjects, usePlayer } from '../state';
-import { CREWS, GOLD, UNCLAIMED } from '../types';
+import { CREWS, GOLD, HABITABLE, UNCLAIMED } from '../types';
 import { getLayout, visualRadius } from './layout';
 import { IS_MOBILE } from './bus';
 
@@ -171,7 +171,9 @@ export function Objects() {
     };
   }, [built]);
 
-  // Incremental recolour: only instances whose ownership key changed are written.
+  // Incremental recolour: only instances whose ownership / habitability key changed are written.
+  // Unclaimed habitable-zone worlds glow mint and breathe softly so they read in the starfield
+  // without a search cheat. Owned worlds keep gold / crew colour.
   useEffect(() => {
     if (!built) return;
     const { mesh, colorKey, pulse } = built;
@@ -180,15 +182,20 @@ export function Objects() {
     const myId = me?.identity ?? null;
     let dirty = false;
     for (let i = 0; i < list.length; i++) {
-      const claim = claims.get(list[i].id);
-      const key = claim ? (claim.owner === myId ? 'gold' : claim.ownerCrew) : 'white';
+      const obj = list[i];
+      const claim = claims.get(obj.id);
+      const key = claim
+        ? (claim.owner === myId ? 'gold' : claim.ownerCrew)
+        : (obj.habitableZone ? 'habitable' : 'white');
       if (colorKey[i] === key) continue;
       colorKey[i] = key;
-      if (key === 'white') c.set(UNCLAIMED);
+      if (key === 'habitable') c.set(HABITABLE);
+      else if (key === 'white') c.set(UNCLAIMED);
       else if (key === 'gold') c.set(GOLD);
       else c.set(CREWS[key as keyof typeof CREWS]?.color ?? UNCLAIMED);
       color.setXYZ(i, c.r, c.g, c.b);
-      pulse.setX(i, key === 'gold' ? 1 : 0);
+      // Gold owns pulse hardest; habitable unclaimed get a quieter breath so they stand out.
+      pulse.setX(i, key === 'gold' ? 1 : key === 'habitable' ? 0.55 : 0);
       dirty = true;
     }
     if (dirty) { color.needsUpdate = true; pulse.needsUpdate = true; }

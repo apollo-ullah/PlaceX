@@ -59,6 +59,7 @@ export type Crew = keyof typeof CREWS;
 export const CREW_IDS = Object.keys(CREWS) as Crew[];
 export const GOLD = '#ffd54a';       // the player's own planets pulse gold
 export const UNCLAIMED = '#ffffff';  // unclaimed objects glow white
+export const HABITABLE = '#7ef0d0';  // unclaimed habitable-zone worlds (mint, not crew green)
 
 export const STARTING_CREDITS = 10_000;
 export const TAKEOVER_MULT = 2;
