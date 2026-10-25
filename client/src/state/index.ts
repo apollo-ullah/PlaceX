@@ -6,6 +6,7 @@ import { MockProvider } from './MockProvider';
 export * from './game';
 export * from './objects';
 export * from './sceneStore';
+export { ClaimEffects, PresenceSync } from './effects';
 export { LiveProvider, MockProvider };
 
 export const IS_MOCK = import.meta.env.VITE_MOCK === '1';

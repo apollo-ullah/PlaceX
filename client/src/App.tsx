@@ -1,7 +1,7 @@
 // App composition. Owned by the lead.
 // Routes: "/" explorer, "/big" big screen mode (Phase 3).
 import { Routes, Route } from 'react-router-dom';
-import { GameProvider } from './state';
+import { GameProvider, ClaimEffects, PresenceSync } from './state';
 import { Scene } from './scene';
 import { Shell } from './ui';
 import { lazy, Suspense } from 'react';
@@ -24,6 +24,8 @@ function Explorer({ big = false }: { big?: boolean }) {
   return (
     <div style={{ position: 'fixed', inset: 0 }}>
       <Scene />
+      <ClaimEffects />
+      <PresenceSync />
       <Shell big={big} />
       {audioDev && <Suspense fallback={null}><AudioDevPanel /></Suspense>}
     </div>
