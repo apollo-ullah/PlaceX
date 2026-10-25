@@ -101,13 +101,17 @@ Frameloop is `always` (the gold pulse and ring animations need it). If battery m
 switch to `frameloop="demand"` and `invalidate()` from the useFrame drivers; not done because
 every screen has something animating.
 
-## Phase 3
+## Phase 3 (done)
 
-- Presence ghosts (`Ghosts.tsx`): other players from `usePresence()` drawn as small crew-coloured
-  ships at `worldPosition(target)`, eased between updates. See the section at the end of this
-  file for status.
-- Territory glow: see the end of this file.
-- `playClaimRipple` is implemented.
+- Presence ghosts (`Ghosts.tsx`): every row from `usePresence()` is a small crew-coloured ship
+  (one InstancedMesh, up to 64) hovering just above `worldPosition(target)`, eased between
+  updates with a gentle bob, pointed at the object. Rows that disappear are removed.
+- Territory glow (`Territory.tsx`): every claimed object casts a soft additive halo in its owner's
+  crew colour (gold for the local player). The halo radius is 50 ly pushed through the local slope
+  of the log compression, `50 * A / (R0 + distanceLy)`, clamped to 0.45 to 5 scene units, and
+  capped at 240 px (160 on mobile). Rebuilt from the claim map when it changes; still one draw.
+- `playClaimRipple(id, color)` is implemented (expanding ring, 0.9 s). The UI or provider should
+  call it on claim events from other players so the big screen shows claims flashing in.
 
 ## Known issues and notes for the lead
 

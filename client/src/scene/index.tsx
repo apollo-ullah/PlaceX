@@ -6,10 +6,12 @@ import { useObjects } from '../state';
 import { DEBUG, IS_MOBILE, rig } from './bus';
 import { CameraRig, BASE_FOV } from './CameraRig';
 import { Effects } from './Effects';
+import { Ghosts } from './Ghosts';
 import { Interaction } from './Interaction';
 import { Objects } from './Objects';
 import { Stars } from './Stars';
 import { SystemView } from './SystemView';
+import { Territory } from './Territory';
 
 export { worldPosition, compressPoint, expandPoint, LAYOUT } from './layout';
 
@@ -63,7 +65,9 @@ export function Scene() {
         style={{ position: 'absolute', inset: 0, touchAction: 'none' }}
       >
         <Stars />
+        <Territory />
         <Objects />
+        <Ghosts />
         <SystemView />
         <Effects />
         <CameraRig />
