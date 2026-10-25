@@ -6,8 +6,8 @@ PlaceX is a live multiplayer real estate market for the real universe. Fly throu
 
 Built at Cal Hacks 13.0 in Cursor with Claude Code subagents. In-game credits only. Prices and sounds are physics-inspired estimates and the UI says so.
 
-- Live: _(URL added at launch)_
-- Big screen mode: _(URL)/big_
+- Live: https://claimtheuniverse.vercel.app (also https://placex-live.vercel.app)
+- Big screen mode: https://claimtheuniverse.vercel.app/big
 - Database: SpacetimeDB Maincloud, database `placex`
 
 ## Run locally
