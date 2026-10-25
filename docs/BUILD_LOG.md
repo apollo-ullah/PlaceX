@@ -83,3 +83,12 @@ Procedural Web Audio engine: looped noise wind pitched by `pitchRatio`, low-pass
 layers for lava, storm, ice, and an orbit tone for airless bodies; crossfades, iOS resume handling,
 mic pitch shifter ("hear your voice there"), and a DevPanel mounted behind `?audio=1`. Verified by
 the agent with a headless Chrome harness measuring output spectra and envelopes.
+
+### 00:45 Agent A final: live database republished, load test done
+
+Live `placex` on Maincloud republished with the full backend and reset clean (flags off). Cloud
+smoke: ack 109 ms, visible 109 ms. Load test on `placex-staging`: 150 clients for 5 minutes,
+1,584 of 1,601 claims ok, 17 genuine ALREADY_CLAIMED races, 0 lost, p50 470 ms and p95 4.7 s during
+a 13 claims per second burst (single-process harness decoding 150 sockets inflates this); 30 clients
+for 60 seconds: p50 134 ms, p95 455 ms. Auction schedule when enabled: Mars 08:00, Moon 08:20,
+Earth 08:40 PT. Auction-only objects cannot be taken over, so the Earth winner keeps it.

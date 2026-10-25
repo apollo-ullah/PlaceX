@@ -83,6 +83,8 @@ export type ReducerError =
   | 'NOT_ADMIN'
   | 'DISABLED';
 
+// Event conventions: `achievement` events carry the AchievementKind in `objectId`;
+// `income` events have an empty `objectId` and `amount` = credits paid that minute.
 export type EventKind = 'claim' | 'takeover' | 'bid' | 'auction_won' | 'income' | 'achievement' | 'join';
 
 export type AchievementKind =
