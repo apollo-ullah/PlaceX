@@ -40,37 +40,21 @@ Expected: `pointer-events: none` while closed, `pointer-events: auto` only with 
 
 ## P2
 
-### P2-1: Planet search is cramped to about 70 pixels on a 390 pixel phone
+### P2-1: Planet search is cramped to about 70 pixels on a 390 pixel phone — fixed
 
-The top HUD gives credits, search, and leaderboard equal-row competition. At 390 pixels, the search input measured about 70 pixels wide and rendered the placeholder as roughly `Find a pla...`.
+Phone HUD now stacks credits + help on row 1 and full-width search on row 2; leaderboard stays a bottom FAB. Callsign is hidden in the credits pill on narrow viewports.
 
-Impact: the main way to locate a known planet looks truncated and is easy to overlook.
+### P2-2: Closed listing controls remain exposed to assistive technology — fixed
 
-Expected: move one control to a second row, collapse the leaderboard control further, or allow search to expand while focused.
+Closed listing dialog now sets `aria-hidden` and `inert` so assistive tech and focus skip it.
 
-### P2-2: Closed listing controls remain exposed to assistive technology
+### P2-3: Some phone tap targets are below 44 x 44 pixels — fixed
 
-After closing a listing, its dialog remains mounted off-screen with opacity zero. The accessibility snapshot still exposed `Close listing`, `Why this price`, `Play sound`, the listing heading, and listing copy.
+Search clear is 44×44; leaderboard tabs and rows are ≥44px on phone; bid chips use a 2-column phone grid.
 
-Impact: keyboard and screen-reader users can encounter controls for a visually closed surface.
+### P2-4: `/big` clips horizontally at phone width — fixed
 
-Expected: unmount the closed card or apply `aria-hidden`, `inert`, and non-focusable behavior while closed. Restore focus to the control that opened it.
-
-### P2-3: Some phone tap targets are below 44 x 44 pixels
-
-The search clear control is 28 x 28 pixels. The leaderboard tabs measured about 42 pixels high in the emulated phone viewport.
-
-Impact: these controls are harder to hit accurately, especially one-handed or with motor impairments.
-
-Expected: provide at least a 44 x 44 pixel interactive area, even if the visible icon remains smaller.
-
-### P2-4: `/big` clips horizontally at phone width
-
-At 390 pixels, the stacked `/big` panels measured about 453 pixels wide, ending near x=465. The root remains 390 pixels wide with overflow hidden, so the right side cannot be reached by scrolling.
-
-Impact: anyone opening the shared `/big` link on a phone sees clipped stats and panels. The normal venue layout at 1920 x 1080 fits correctly.
-
-Expected: constrain grid children with `min-width: 0`, allow stats to wrap within the viewport, and keep every panel at or below the available width.
+`/big` grid children use `min-width: 0` / `max-width: 100%`; stats wrap; auction/QR scale down on phone.
 
 ### P2-5: Airless-object sound copy contradicts itself
 

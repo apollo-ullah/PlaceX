@@ -63,6 +63,17 @@ export const HABITABLE = '#7ef0d0';  // unclaimed habitable-zone worlds (mint, n
 
 export const STARTING_CREDITS = 10_000;
 export const TAKEOVER_MULT = 2;
+
+/** Hostile takeover cost: 2× last price paid. Open asks also floor the base. */
+export function takeoverCost(
+  pricePaid: number,
+  catalogPrice: number,
+  opts?: { forSale?: boolean; askCredits?: number },
+): number {
+  let base = pricePaid > 0 ? pricePaid : catalogPrice;
+  if (opts?.forSale && (opts.askCredits ?? 0) > base) base = opts.askCredits!;
+  return base * TAKEOVER_MULT;
+}
 export const CALLSIGN_MIN = 2;
 export const CALLSIGN_MAX = 16;
 

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { GameContext, type GameActions, type GameState } from './game';
 import { useObjectsStore } from './objects';
 import type { AuctionView, ClaimView, Crew, EventView, PlayerView, PresenceView } from '../types';
-import { CREW_IDS, STARTING_CREDITS, TAKEOVER_MULT } from '../types';
+import { CREW_IDS, STARTING_CREDITS, takeoverCost } from '../types';
 
 const ME = 'c200ffffffffffffffffffffffffffffffffffffffffffffffffffffffff0001';
 const BOT_NAMES = ['ady', 'nova', 'kepler', 'ziggy', 'orbit', 'luna', 'quasar', 'pixel'];
@@ -138,7 +138,7 @@ export function MockProvider({ children }: { children: ReactNode }) {
       if (!o) throw new Error('UNKNOWN_OBJECT');
       if (!c) throw new Error('NOT_CLAIMED');
       if (c.owner === ME) throw new Error('OWN_OBJECT');
-      const cost = o.priceCredits * TAKEOVER_MULT;
+      const cost = takeoverCost(c.pricePaid, o.priceCredits, { forSale: c.forSale, askCredits: c.askCredits });
       if (me.credits < cost) throw new Error('INSUFFICIENT_CREDITS');
       await new Promise(r => setTimeout(r, 120));
       setClaims(prev => new Map(prev).set(objectId, { objectId, owner: ME, ownerCallsign: me.callsign, ownerCrew: me.crew, pricePaid: cost, claimedAt: Date.now(), forSale: false, askCredits: 0 }));
@@ -152,7 +152,8 @@ export function MockProvider({ children }: { children: ReactNode }) {
       if (!o) throw new Error('UNKNOWN_OBJECT');
       if (!c) throw new Error('NOT_CLAIMED');
       if (c.owner !== ME) throw new Error('NOT_OWNER');
-      if (askCredits < o.priceCredits) throw new Error('ASK_TOO_LOW');
+      const floor = Math.max(o.priceCredits, c.pricePaid);
+      if (askCredits < floor) throw new Error('ASK_TOO_LOW');
       setClaims(prev => new Map(prev).set(objectId, { ...c, forSale: true, askCredits }));
       push({ kind: 'listed', actor: ME, actorCallsign: me.callsign, objectId, amount: askCredits });
     },

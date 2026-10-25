@@ -144,6 +144,29 @@ describe('hostile_takeover', () => {
     expect(achievements(B)).toContain('takeover_artist');
   });
 
+  it('escalates: each takeover costs 2x the last price paid', () => {
+    claim(A, 'wasp-76-b'); // 900
+    takeover(B, 'wasp-76-b'); // 1800
+    takeover(A, 'wasp-76-b'); // 3600
+    const c = h.withReducerTx(ADMIN, ctx => ctx.db.claim.objectId.find('wasp-76-b')!);
+    expect(c.pricePaid).toBe(3600n);
+    expect(c.owner.equals(playerRow(A).identity)).toBe(true);
+    expect(playerRow(A).credits).toBe(10_000n - 900n + 1800n - 3600n);
+    expect(playerRow(B).credits).toBe(10_000n - 1800n + 3600n);
+  });
+
+  it('cannot undercut an open ask with a cheap takeover', () => {
+    claim(A, 'wasp-76-b'); // A paid 900
+    h.withReducerTx(A, ctx => mod.listForSale(ctx, { objectId: 'wasp-76-b', askCredits: 5000n }));
+    // Catalog 2x would be 1800; ask floors the base so takeover is 10_000.
+    takeover(B, 'wasp-76-b');
+    const c = h.withReducerTx(ADMIN, ctx => ctx.db.claim.objectId.find('wasp-76-b')!);
+    expect(c.pricePaid).toBe(10_000n);
+    expect(c.forSale).toBe(false);
+    expect(playerRow(B).credits).toBe(0n);
+    expect(playerRow(A).credits).toBe(10_000n - 900n + 10_000n);
+  });
+
   it('validates ownership and auction-only objects', () => {
     expect(() => takeover(B, 'wasp-76-b')).toThrow('NOT_CLAIMED');
     claim(A, 'wasp-76-b');

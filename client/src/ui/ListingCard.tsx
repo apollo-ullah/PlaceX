@@ -5,7 +5,7 @@ import {
   useObject, usePlayer, usePresence, useSceneApi, useSceneStore, useSelectedObjectId,
 } from '../state';
 import { playPlanetSound, stopSound, SOUND_DISCLAIMER } from '../audio';
-import { CREWS, TAKEOVER_MULT, type CelestialObject } from '../types';
+import { CREWS, takeoverCost, type CelestialObject } from '../types';
 import { Planet } from './Planet';
 import { useToast } from './Toast';
 import { BidControls } from './AuctionPanel';
@@ -81,14 +81,18 @@ function CardBody({ obj, open, onClose }: { obj: CelestialObject; open: boolean;
   const onMarket = !!claim && claim.forSale && !mine;
   const isTakeover = !!claim && !mine && !onMarket;
   const buyCost = onMarket ? claim!.askCredits : 0;
-  const cost = onMarket ? buyCost : isTakeover ? obj.priceCredits * TAKEOVER_MULT : obj.priceCredits;
+  const snipeCost = claim
+    ? takeoverCost(claim.pricePaid, obj.priceCredits, { forSale: claim.forSale, askCredits: claim.askCredits })
+    : obj.priceCredits * 2;
+  const cost = onMarket ? buyCost : isTakeover ? snipeCost : obj.priceCredits;
   const canAfford = (me?.credits ?? 0) >= cost;
   const rent = claim ? rentPerMinute(claim.pricePaid, obj.habitableZone) : rentPerMinute(obj.priceCredits, obj.habitableZone);
+  const listFloor = Math.max(obj.priceCredits, claim?.pricePaid ?? obj.priceCredits);
 
   useEffect(() => {
     if (claim?.forSale) setAsk(claim.askCredits);
-    else setAsk(Math.max(obj.priceCredits, claim?.pricePaid ?? obj.priceCredits));
-  }, [claim?.forSale, claim?.askCredits, claim?.pricePaid, obj.priceCredits]);
+    else setAsk(listFloor);
+  }, [claim?.forSale, claim?.askCredits, listFloor]);
 
   async function act() {
     if (!me || phase === 'pending' || phase === 'claimed' || phase === 'bought') return;
@@ -190,6 +194,8 @@ function CardBody({ obj, open, onClose }: { obj: CelestialObject; open: boolean;
       data-cls={obj.cls}
       role="dialog"
       aria-label={`${obj.name} listing`}
+      aria-hidden={!open}
+      inert={!open ? true : undefined}
     >
       {stamp && (
         <div className={`px-stamp px-stamp--${stamp}`} aria-live="assertive">
@@ -318,16 +324,16 @@ function CardBody({ obj, open, onClose }: { obj: CelestialObject; open: boolean;
                     <input
                       className="px-input px-mono"
                       type="number"
-                      min={obj.priceCredits}
+                      min={listFloor}
                       step={50}
                       value={ask}
                       onChange={e => setAsk(Math.max(0, Number(e.target.value) || 0))}
                     />
                   </label>
-                  <button type="button" className="px-btn px-btn--block px-btn--primary" disabled={listing || ask < obj.priceCredits} onClick={listIt}>
+                  <button type="button" className="px-btn px-btn--block px-btn--primary" disabled={listing || ask < listFloor} onClick={listIt}>
                     {listing ? <><span className="px-spin" /> Listing</> : <>List for sale <span className="px-mono">{formatCredits(ask)} cr</span></>}
                   </button>
-                  <p className="px-cta__hint">Floor is the list price ({formatCredits(obj.priceCredits)} cr). Buyers pay your ask. You keep the credits.</p>
+                  <p className="px-cta__hint">Floor is {formatCredits(listFloor)} cr. Buyers pay your ask; a hostile takeover costs 2× that ask.</p>
                 </>
               )}
             </div>
@@ -376,15 +382,15 @@ function CardBody({ obj, open, onClose }: { obj: CelestialObject; open: boolean;
                     }
                   }}
                 >
-                  Or hostile takeover <span className="px-mono">{formatCredits(obj.priceCredits * TAKEOVER_MULT)} cr</span>
+                  Or hostile takeover <span className="px-mono">{formatCredits(snipeCost)} cr</span>
                 </button>
               )}
               <p className={`px-cta__hint ${phase === 'insufficient' ? 'px-cta__hint--err' : ''}`}>
                 {phase === 'insufficient'
                   ? `Short by ${formatCredits(shortfall)} cr. Teleport somewhere cheaper.`
                   : phase === 'sniped' ? 'Sniped. Someone beat you to it.'
-                  : onMarket ? `Pays ${claim?.ownerCallsign} their ask. Instant transfer.`
-                  : isTakeover ? `Pays ${claim?.ownerCallsign} double. They will notice.`
+                  : onMarket ? `Pays ${claim?.ownerCallsign} their ask. Takeover is 2× the ask (${formatCredits(snipeCost)} cr).`
+                  : isTakeover ? `Pays ${claim?.ownerCallsign} 2× what they paid. Next snipe doubles again.`
                   : !canAfford ? `You have ${formatCredits(me?.credits ?? 0)} cr. This one costs more.`
                   : 'One owner per planet. Tap before someone else does.'}
               </p>

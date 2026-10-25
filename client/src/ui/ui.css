@@ -861,57 +861,121 @@
 .px-big__qr-copy .px-mono { color: var(--gold); font-size: 15px; }
 
 @media (max-width: 899px) {
-  .px-big { grid-template-columns: 1fr; grid-template-rows: auto auto 1fr auto auto; grid-template-areas: "stats" "auction" "ticker" "lb" "qr"; gap: 12px; padding: 12px; }
-  .px-big__auction { grid-template-columns: 64px 1fr auto; column-gap: 14px; padding: 14px 16px; }
-  .px-big__auction > .px-planet { --size: 64px !important; }
-  .px-big__auction-name { font-size: 24px; }
-  .px-big__auction-stat b { font-size: 26px; }
-  .px-big__auction-clock b { font-size: 34px; }
-  .px-big__sold-stamp { font-size: 90px; border-width: 6px; padding: 6px 24px; }
-  .px-big__sold-line { font-size: 22px; padding: 0 16px; }
-  .px-big__stats { flex-wrap: wrap; padding: 14px 18px; }
-  .px-big__nums { gap: 18px; }
-  .px-big__num b { font-size: 26px; }
-  .px-big__line { font-size: 16px; }
-  .px-big__lb .px-lb__name, .px-big__lb .px-lb__val { font-size: 16px; }
+  .px-big { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(160px, 1fr) auto auto; grid-template-areas: "stats" "auction" "ticker" "lb" "qr"; gap: 12px; padding: 12px; }
+  .px-big__auction { grid-template-columns: 56px minmax(0, 1fr) auto; column-gap: 12px; padding: 12px 14px; }
+  .px-big__auction > .px-planet { --size: 56px !important; }
+  .px-big__auction-name { font-size: 20px; }
+  .px-big__auction-stat b { font-size: 22px; }
+  .px-big__auction-clock b { font-size: 28px; }
+  .px-big__sold-stamp { font-size: clamp(48px, 18vw, 90px); border-width: 6px; padding: 6px 24px; }
+  .px-big__sold-line { font-size: 18px; padding: 0 16px; }
+  .px-big__stats { flex-wrap: wrap; padding: 14px 16px; }
+  .px-big__nums { gap: 14px; }
+  .px-big__num b { font-size: 22px; }
+  .px-big__line { font-size: 15px; }
+  .px-big__lb .px-lb__name, .px-big__lb .px-lb__val { font-size: 15px; }
+  .px-big__lb .px-lb__row { min-height: 44px; grid-template-columns: 28px 12px minmax(0, 1fr) auto; }
 }
 
 /* ---------- Mobile (phones, 390 px baseline) ---------- */
 @media (max-width: 899px) {
   /* Landing: scroll on short screens instead of colliding with the brand row. */
   .px-landing { justify-content: flex-start; overflow-y: auto; overscroll-behavior: contain; padding-top: calc(var(--safe-top) + 64px); }
-  .px-landing__inner { margin: auto auto 0; }
+  .px-landing__inner { margin: auto auto 0; max-width: none; padding-left: 4px; padding-right: 4px; }
+  .px-landing h1 { font-size: clamp(34px, 9vw, 48px); }
+  .px-landing__sub { font-size: 15px; }
 
   /* HUD top: credits + search + help. The leaderboard moves to the thumb zone. */
-  .px-hud-top { grid-template-columns: auto minmax(0, 1fr) auto; }
-  .px-search { max-width: 480px; }
-  .px-credits { min-width: 0; }
+  .px-hud-top { grid-template-columns: auto minmax(0, 1fr) auto; gap: 6px; }
+  .px-search { max-width: none; min-width: 0; }
+  .px-credits { min-width: 0; padding: 6px 10px 6px 6px; }
+  .px-credits__name { display: none; }
+  .px-credits__amt { font-size: 15px; }
+  .px-help { width: 44px; height: 44px; }
 
   /* Bottom band lets drags through to the scene except on the real controls. */
-  .px-hud-bottom { pointer-events: none; }
-  .px-hud-bottom .px-teleport, .px-hud-bottom .px-ticker { pointer-events: auto; }
+  .px-hud-bottom {
+    pointer-events: none;
+    gap: 8px;
+    bottom: calc(var(--safe-bottom) + 12px);
+    /* Leave room for the fixed leaderboard FAB on the right. */
+    padding-right: 68px;
+  }
+  .px-hud-bottom .px-teleport,
+  .px-hud-bottom .px-ticker,
+  .px-hud-bottom .px-auction { pointer-events: auto; }
+  .px-ticker { max-height: 72px; padding: 8px 10px; }
+  .px-ticker__line { font-size: 12px; }
+  .px-teleport { min-height: 52px; padding: 0 22px; font-size: 14px; }
+  .px-auction { max-width: 100%; }
+  .px-auction__head { min-height: 56px; padding: 8px 10px; gap: 10px; }
+  .px-bid__chips { grid-template-columns: repeat(2, 1fr); }
+  .px-bid__chip { min-height: 48px; }
 
   /* Leaderboard: round trophy button level with Teleport, panel opens upward. */
   .px-lb-wrap { position: fixed; right: calc(var(--safe-right) + 12px); bottom: calc(var(--safe-bottom) + 14px); z-index: 6; transition: opacity 0.25s var(--ease); }
   .px-lb-toggle { width: 56px; height: 56px; min-height: 56px; padding: 0; border-radius: 50%; }
   .px-lb-toggle__label { display: none; }
-  .px-lb { top: auto; bottom: calc(100% + 8px); transform-origin: bottom right; }
+  .px-lb { top: auto; bottom: calc(100% + 8px); transform-origin: bottom right; width: min(calc(100vw - 24px), 320px); }
   .px-lb--closed { transform: translateY(8px) scale(0.96); }
   .px-root--card .px-lb-wrap { opacity: 0; pointer-events: none; }
+  .px-tab { min-height: 44px; padding: 0 16px; }
+  .px-lb__row { min-height: 44px; }
+
+  /* Listing sheet: taller, sticky claim/buy row, readable sell ask. */
+  .px-card { max-height: min(78dvh, 720px); border-radius: 20px 20px 0 0; }
+  .px-card__body { padding: 0 14px calc(var(--safe-bottom) + 14px); }
+  .px-card__hero { grid-template-columns: 72px 1fr; gap: 12px; }
+  .px-card__hero .px-planet { --size: 72px; }
+  .px-card__title h2 { font-size: 22px; }
+  .px-price__amt { font-size: 30px; }
+  .px-cta { position: sticky; bottom: 0; padding-top: 8px; padding-bottom: 2px; background: linear-gradient(180deg, transparent, rgba(8, 10, 18, 0.92) 28%); }
+  .px-sell__ask .px-input { font-size: 16px; min-height: 48px; }
+  .px-sound__row { flex-wrap: wrap; }
+  .px-sound__btn { min-width: 0; flex: 1 1 auto; min-height: 48px; }
 
   /* Portfolio header: long callsigns wrap instead of pushing the total off screen. */
-  .px-portfolio__head > div:first-child { min-width: 0; }
-  .px-portfolio__head h3 { overflow-wrap: anywhere; }
+  .px-portfolio__head { flex-wrap: wrap; padding-right: 56px; }
+  .px-portfolio__head > div:first-child { min-width: 0; flex: 1 1 160px; }
+  .px-portfolio__head h3 { overflow-wrap: anywhere; font-size: 20px; }
+  .px-portfolio__grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .px-holding { min-height: 110px; padding: 10px; }
+
+  /* Tutorial sits above the thumb zone. */
+  .px-tut { padding-bottom: calc(var(--safe-bottom) + 24px); }
+  .px-tut__card h2 { font-size: 20px; }
+  .px-tut__card p { font-size: 14px; }
+
+  /* /big must not overflow the phone viewport. */
+  .px-big { min-width: 0; width: 100%; overflow-x: hidden; overflow-y: auto; }
+  .px-big > * { min-width: 0; max-width: 100%; }
+  .px-big__stats { gap: 12px; }
+  .px-big__brand { font-size: 18px; }
+  .px-big__brand small { display: none; }
+  .px-big__nums { flex-wrap: wrap; justify-content: flex-end; gap: 12px 16px; }
+  .px-big__qr { flex-direction: column; align-items: flex-start; }
+  .px-big__qr img, .px-big__qr .px-big__qr-fallback { width: 120px; height: 120px; }
 }
 
 @media (max-width: 520px) {
-  /* Search results span the full HUD width instead of the narrow search box. */
-  .px-search { position: static; }
+  /* Credits + help on row 1, full-width search on row 2. */
+  .px-hud-top {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "credits help"
+      "search search";
+  }
+  .px-credits { grid-area: credits; width: fit-content; }
+  .px-hud-top__right { grid-area: help; }
+  .px-search { grid-area: search; position: relative; }
+  .px-search__results { left: 0; right: 0; max-height: 42dvh; }
   .px-search__item > span:nth-child(2) { min-width: 0; }
   .px-search__item > span:nth-child(2) > b,
   .px-search__item > span:nth-child(2) > span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .px-search__item em { white-space: nowrap; }
-  .px-search__results { max-height: 45dvh; }
+
+  .px-portfolio__grid { grid-template-columns: 1fr; }
+  .px-chips { grid-template-columns: 1fr 1fr; }
 }
 
 /* ---------- Desktop ---------- */

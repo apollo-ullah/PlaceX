@@ -5,7 +5,8 @@
 //   - Everyone starts with 10,000 credits. All credit changes happen inside reducers.
 //   - One owner per object: `claim.objectId` is the primary key, so two concurrent
 //     claims cannot both succeed. The loser's reducer throws ALREADY_CLAIMED.
-//   - Hostile takeover costs 2x the object's price; the previous owner receives it.
+//   - Hostile takeover costs 2x what the current owner paid (wage war). If the deed
+//     is listed, the ask also floors the base so a takeover cannot undercut the sale.
 //   - Earth, Moon and Mars are auction only.
 //   - Error codes are thrown as SenderError('CODE') and reach the client as the
 //     rejected promise's message. Codes are listed in client/src/types.ts.
@@ -163,6 +164,13 @@ type Ctx = ReducerCtx<InferSchema<typeof spacetimedb>>;
 
 const STARTING_CREDITS = 10_000n;
 const TAKEOVER_MULT = 2n;
+
+/** Base for a hostile takeover: last price paid, never under an open ask. */
+function takeoverBase(existing: { pricePaid: bigint; forSale: boolean; askCredits: bigint }, catalogPrice: bigint): bigint {
+  let base = existing.pricePaid > 0n ? existing.pricePaid : catalogPrice;
+  if (existing.forSale && existing.askCredits > base) base = existing.askCredits;
+  return base;
+}
 const CALLSIGN_MIN = 2;
 const CALLSIGN_MAX = 16;
 const EVENT_KEEP = 200;
@@ -444,8 +452,9 @@ export const listForSale = spacetimedb.reducer(
     const existing = ctx.db.claim.objectId.find(objectId);
     if (!existing) throw new SenderError('NOT_CLAIMED');
     if (!existing.owner.equals(ctx.sender)) throw new SenderError('NOT_OWNER');
-    // Floor at the catalog list price so the market cannot be spammed with 1 cr asks.
-    if (askCredits < obj.priceCredits) throw new SenderError('ASK_TOO_LOW');
+    // Floor at the higher of catalog list price and what you paid (after a wage war).
+    const floor = existing.pricePaid > obj.priceCredits ? existing.pricePaid : obj.priceCredits;
+    if (askCredits < floor) throw new SenderError('ASK_TOO_LOW');
     const activeAuction = ctx.db.auction.objectId.find(objectId);
     if (activeAuction && activeAuction.active) throw new SenderError('AUCTION_ONLY');
 
@@ -514,7 +523,8 @@ export const hostileTakeover = spacetimedb.reducer(
     const existing = ctx.db.claim.objectId.find(objectId);
     if (!existing) throw new SenderError('NOT_CLAIMED');
     if (existing.owner.equals(ctx.sender)) throw new SenderError('OWN_OBJECT');
-    const cost = TAKEOVER_MULT * obj.priceCredits;
+    // Wage war: 2x last paid. Listed ask floors the base so sniping cannot beat the ask.
+    const cost = TAKEOVER_MULT * takeoverBase(existing, obj.priceCredits);
     if (p.credits < cost) throw new SenderError('INSUFFICIENT_CREDITS');
 
     // Move the claim and clear any open ask.
@@ -523,7 +533,7 @@ export const hostileTakeover = spacetimedb.reducer(
       forSale: false, askCredits: 0n,
     });
 
-    // Buyer pays 2x and books the object at what they paid.
+    // Buyer pays 2x the base and books the object at what they paid.
     ctx.db.player.identity.update({
       ...p,
       credits: p.credits - cost,

@@ -12,7 +12,7 @@ const STEPS: { title: string; body: string }[] = [
   },
   {
     title: 'How you make credits',
-    body: 'Owned planets pay rent every minute: about 1% of what you paid, 3% if habitable. List a deed for sale at your ask, or collect 2x when someone hostile-takes it. No cash shop.',
+    body: 'Owned planets pay rent every minute: about 1% of what you paid, 3% if habitable. List a deed for sale at your ask. Hostile takeovers cost 2× what the owner paid — and the next snipe doubles again. No cash shop.',
   },
   {
     title: 'Rivalry and auctions',
