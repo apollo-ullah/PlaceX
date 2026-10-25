@@ -66,3 +66,13 @@ Lead in parallel:
 - Vercel project `placex` linked to `client/`, production env `VITE_STDB_URI=wss://maincloud.spacetimedb.com`, `VITE_STDB_DB=placex`. First production deploy of main (stubs) succeeded. Vercel Authentication was on by default and blocked the public; turned off.
 - `placex.vercel.app` is owned by someone else. Public aliases: `placex-iota.vercel.app`, `placex-adyan-ullahs-projects.vercel.app` (plus any memorable alias set below).
 - Merge order when branches pass review: B, A, D, C, E. Then swap stubs, redeploy, QR, tell Ady.
+
+### 00:20 merged Agent A (backend) into main
+
+Hostile takeover, achievements (first_claim, diamond_collector, water_baron, hell_landlord,
+habitable_tycoon, system_complete, takeover_artist), passive income (1% per minute, 3% habitable,
+gated by config.incomeEnabled), bids with escrow and refunds, rolling auctions anchored so Earth
+closes at 08:40 PT (gated by config.auctionsEnabled), 13 vitest harness tests including the claim
+race, and scripts/load.ts (refuses to target the live database). Lead verified: server build,
+typecheck, tests, local republish, seed, smoke pass, client build. Bindings unchanged.
+Note for UI: event kind `achievement` carries the achievement kind in `objectId`.
