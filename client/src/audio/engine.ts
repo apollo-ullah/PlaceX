@@ -150,14 +150,16 @@ export function windShape(s: SoundParams): WindShape {
   const d = Math.max(s.density, 0.001);
   const thinness = clamp(-Math.log10(d), 0, 2) / 2;   // 0 at Earth, 1 at density 0.01 (Mars)
   const heaviness = clamp(Math.log10(d), 0, 2) / 2;   // 0 at Earth, 1 at density 100 (Venus)
+  // Thin air: the wind bands move up and the body loses weight, so it whispers instead of
+  // roaring. Thick air: a low-pass closes down and a shelf adds weight, so it is muffled.
   return {
     pitchRatio: pr,
     lowpassHz: clamp(4000 / Math.sqrt(d), 380, 14000),   // Earth 4000, Jupiter 730, Venus 420, Mars 14000
-    highpassHz: 70 + thinness * 1300,
+    highpassHz: 70 + thinness * 550,
     bassDb: heaviness * 7,
-    level: 0.75 * (1 - 0.5 * thinness) * (1 + 0.1 * heaviness),
-    bodyHz: 260 * Math.pow(pr, 0.75),
-    swirlHz: 900 * pr,
+    level: 0.75 * (1 - 0.6 * thinness) * (1 + 0.1 * heaviness),
+    bodyHz: 260 * Math.pow(pr, 0.75) * (1 + 3 * thinness),
+    swirlHz: 900 * pr * (1 + 2 * thinness),
   };
 }
 
@@ -297,19 +299,19 @@ function addLavaLayer(c: AudioContext, v: Voice, wind: Wind) {
   // Low rumble: brown noise under 110 Hz plus a slow sub tone that drifts.
   const rumbleSrc = noise(c, v, brown, 0.9);
   const rumbleLp = filter(c, v, 'lowpass', 110, 1.2);
-  const rumbleGain = gainNode(c, v, 0.9);
+  const rumbleGain = gainNode(c, v, 0.55);
   rumbleSrc.connect(rumbleLp); rumbleLp.connect(rumbleGain); rumbleGain.connect(v.gain);
-  repeat(v, 700, 2200, () => glide(rumbleGain.gain, rand(0.5, 1.2), 0.6));
+  repeat(v, 700, 2200, () => glide(rumbleGain.gain, rand(0.3, 0.75), 0.6));
 
   const sub = osc(c, v, 'sine', 46);
-  const subGain = gainNode(c, v, 0.22);
+  const subGain = gainNode(c, v, 0.14);
   sub.connect(subGain); subGain.connect(v.gain);
   repeat(v, 1500, 4000, () => glide(sub.frequency, rand(38, 56), 1.2));
 
   // Crackle: short band-passed noise bursts at random intervals, each a few ms long.
-  const crackleBus = gainNode(c, v, 0.8);
+  const crackleBus = gainNode(c, v, 1.2);
   crackleBus.connect(v.gain);
-  repeat(v, 35, 320, () => {
+  repeat(v, 30, 280, () => {
     const t = c.currentTime;
     const burst = c.createBufferSource();
     burst.buffer = white;
@@ -318,7 +320,7 @@ function addLavaLayer(c: AudioContext, v: Voice, wind: Wind) {
     bp.frequency.value = rand(1200, 5200);
     bp.Q.value = rand(3, 9);
     const env = c.createGain();
-    const peak = rand(0.15, 0.7);
+    const peak = rand(0.25, 0.9);
     const dur = rand(0.012, 0.09);
     env.gain.setValueAtTime(0.0001, t);
     env.gain.exponentialRampToValueAtTime(peak, t + 0.002);
