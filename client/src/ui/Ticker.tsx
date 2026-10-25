@@ -7,7 +7,7 @@ import { isTickerEvent, tickerParts } from './format';
 export function TickerLine({ e, byId, me, big = false, fresh = false }: { e: EventView; byId: Map<string, CelestialObject>; me: string | null; big?: boolean; fresh?: boolean }) {
   const p = tickerParts(e, byId);
   const base = big ? 'px-big__line' : 'px-ticker__line';
-  const cls = [base, p.kind === 'takeover' && `${base}--takeover`, e.actor === me && `${base}--me`, fresh && big && `${base}--new`].filter(Boolean).join(' ');
+  const cls = [base, p.kind === 'takeover' && `${base}--takeover`, p.kind === 'auction_won' && `${base}--won`, p.kind === 'bid' && `${base}--bid`, e.actor === me && `${base}--me`, fresh && big && `${base}--new`].filter(Boolean).join(' ');
   return (
     <div className={cls}>
       <b>{p.actor}</b> {p.verb}{p.object && <> <b>{p.object}</b></>}{p.amount && <> for <span className="px-mono">{p.amount}</span></>}

@@ -221,7 +221,7 @@
   font: inherit; font-size: 16px; padding: 0;
 }
 .px-search__box input::placeholder { color: var(--muted); }
-.px-search__clear { appearance: none; border: 0; background: transparent; color: var(--muted); width: 28px; height: 28px; border-radius: 50%; cursor: pointer; display: grid; place-items: center; font-size: 18px; line-height: 1; }
+.px-search__clear { appearance: none; border: 0; background: transparent; color: var(--muted); width: 44px; height: 44px; margin-right: -10px; flex: none; border-radius: 50%; cursor: pointer; display: grid; place-items: center; font-size: 18px; line-height: 1; }
 .px-search__results {
   position: absolute; top: calc(100% + 8px); left: 0; right: 0;
   padding: 6px;
@@ -288,11 +288,15 @@
 .px-ticker__line b { color: var(--fg); font-weight: 600; }
 .px-ticker__line .px-mono { color: var(--gold); font-size: 12px; }
 .px-ticker__line--takeover b:first-child { color: var(--danger); }
+.px-ticker__line--won { color: var(--gold); }
+.px-ticker__line--won b { color: var(--gold); }
 .px-ticker__line--me b:first-child { color: var(--gold); }
 .px-ticker__empty { color: var(--muted); font-size: 13px; }
 
 /* Leaderboard */
-.px-lb-toggle { z-index: 6; white-space: nowrap; }
+.px-lb-wrap { position: relative; justify-self: end; }
+.px-lb-toggle { z-index: 6; white-space: nowrap; padding-left: 12px; padding-right: 14px; max-width: 140px; }
+.px-lb-toggle__label { font-size: 13px; overflow: hidden; text-overflow: ellipsis; }
 .px-lb {
   position: absolute;
   top: calc(100% + 8px);
@@ -351,10 +355,11 @@
   opacity: 0;
   z-index: 10;
   overflow: hidden;
+  pointer-events: none;
   --tint: transparent;
   background: linear-gradient(180deg, var(--tint), transparent 40%), var(--glass-strong);
 }
-.px-card--open { transform: translateY(0); opacity: 1; }
+.px-card--open { transform: translateY(0); opacity: 1; pointer-events: auto; }
 .px-card--dragging { transition: none; }
 .px-card[data-cls="lava"], .px-card[data-cls="hot_jupiter"] { --tint: rgba(255, 70, 30, 0.22); }
 .px-card[data-cls="water"] { --tint: rgba(50, 150, 255, 0.2); }
@@ -362,7 +367,39 @@
 .px-card[data-cls="ice_giant"] { --tint: rgba(120, 220, 255, 0.14); }
 .px-card[data-cls="gas_giant"] { --tint: rgba(255, 190, 110, 0.14); }
 .px-card[data-cls="star"] { --tint: rgba(255, 230, 120, 0.2); }
-.px-card--lava-shake { animation: px-tremor 0.9s ease-in-out 1; }
+/* Tremor waits for the slide-in so the two transforms do not fight. */
+.px-card--lava-shake { animation: px-tremor 0.9s 0.45s ease-in-out 1; }
+
+/* One-shot open effects per class. The layer sits over the body and never takes taps. */
+.px-card::before { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: 0; }
+.px-card--open[data-cls="lava"]::before, .px-card--open[data-cls="hot_jupiter"]::before {
+  background: radial-gradient(120% 60% at 50% 0%, rgba(255, 90, 30, 0.28), transparent 70%);
+  animation: px-card-heat 1.4s 0.35s ease-out 1 both;
+}
+@keyframes px-card-heat { 0% { opacity: 0; } 30% { opacity: 1; } 100% { opacity: 0; } }
+.px-card--open[data-cls="water"]::before {
+  inset: auto; left: 70px; top: 75px; width: 100px; height: 100px; margin: -50px 0 0 -50px;
+  border-radius: 50%; border: 2px solid rgba(120, 200, 255, 0.7);
+  box-shadow: 0 0 24px rgba(80, 170, 255, 0.4), inset 0 0 18px rgba(80, 170, 255, 0.3);
+  animation: px-card-ripple 1.5s 0.3s ease-out 1 both;
+}
+@keyframes px-card-ripple { 0% { opacity: 0.9; transform: scale(0.6); } 100% { opacity: 0; transform: scale(6); } }
+.px-card--open[data-cls="ice_giant"]::before {
+  background: linear-gradient(115deg, transparent 30%, rgba(190, 245, 255, 0.22) 44%, rgba(255, 255, 255, 0.38) 50%, rgba(190, 245, 255, 0.22) 56%, transparent 70%);
+  background-size: 250% 100%;
+  animation: px-card-sweep 1.7s 0.35s var(--ease) 1 both;
+}
+.px-card--open[data-cls="carbon"]::before {
+  background: linear-gradient(105deg, transparent 42%, rgba(255, 255, 255, 0.5) 49%, rgba(220, 235, 255, 0.2) 51%, transparent 58%);
+  background-size: 300% 100%;
+  animation: px-card-sweep 0.9s 0.4s ease-out 1 both;
+}
+@keyframes px-card-sweep { 0% { opacity: 1; background-position: 100% 0; } 85% { opacity: 1; } 100% { opacity: 0; background-position: 0% 0; } }
+.px-card--open[data-cls="gas_giant"]::before {
+  background: repeating-linear-gradient(176deg, rgba(255, 200, 140, 0.1) 0 14px, transparent 14px 40px);
+  animation: px-card-bands 2.2s 0.3s ease-in-out 1 both;
+}
+@keyframes px-card-bands { 0% { opacity: 0; background-position: 0 0; } 35% { opacity: 1; } 100% { opacity: 0; background-position: 0 80px; } }
 @keyframes px-tremor { 0%, 100% { transform: translate(0, 0); } 20% { transform: translate(1px, -1px); } 40% { transform: translate(-1px, 1px); } 60% { transform: translate(1px, 1px); } 80% { transform: translate(-1px, -1px); } }
 
 .px-card__grab { display: flex; justify-content: center; padding: 10px 0 4px; cursor: grab; touch-action: none; }
@@ -505,6 +542,70 @@
 @keyframes px-glow { 0%, 100% { box-shadow: inset -12px -10px 28px rgba(0,0,0,0.65), 0 0 40px var(--p-glow); } 50% { box-shadow: inset -12px -10px 28px rgba(0,0,0,0.65), 0 0 64px var(--p-glow); } }
 .px-planet--carbon .px-planet__spark { position: absolute; width: 4px; height: 4px; border-radius: 50%; background: #fff; box-shadow: 0 0 8px #fff; animation: px-twinkle 1.6s ease-in-out infinite; }
 @keyframes px-twinkle { 0%, 100% { opacity: 0; transform: scale(0.4); } 50% { opacity: 1; transform: scale(1.2); } }
+.px-planet--ice::before { background: var(--p-bands), linear-gradient(120deg, transparent 35%, rgba(230, 252, 255, 0.55) 50%, transparent 65%); background-size: auto, 300% 100%; animation: px-frost 4.5s ease-in-out infinite; }
+@keyframes px-frost { 0%, 100% { background-position: 0 0, 100% 0; } 50% { background-position: 0 0, 0% 0; } }
+.px-planet--gas::before { animation: px-drift 9s linear infinite; }
+@keyframes px-drift { from { background-position: 0 0; } to { background-position: 0 48px; } }
+
+/* ---------- Auction (HUD panel and bid controls) ---------- */
+.px-auction {
+  order: -1;
+  border-radius: 16px;
+  overflow: hidden;
+  animation: px-rise 0.4s var(--ease) both;
+  border-color: rgba(255, 213, 74, 0.35);
+}
+.px-auction__head {
+  appearance: none; border: 0; background: transparent; color: var(--fg); font: inherit; cursor: pointer; text-align: left;
+  width: 100%; min-height: 60px; padding: 8px 12px;
+  display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 12px;
+  -webkit-tap-highlight-color: transparent;
+}
+.px-auction__head .px-planet { animation: none; box-shadow: inset -5px -4px 12px rgba(0,0,0,0.65), 0 0 14px var(--p-glow); }
+.px-auction__head .px-planet::after { display: none; }
+.px-auction__col { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
+.px-auction__eyebrow { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; color: var(--gold); }
+.px-auction__eyebrow i { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 8px var(--gold); animation: px-pulse 1.4s ease-in-out infinite; }
+.px-auction__name { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.px-auction__high { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.px-auction__high .px-mono { color: var(--gold); font-weight: 600; }
+.px-auction__high--bump .px-mono { display: inline-block; animation: px-bump 0.6s var(--ease); }
+.px-auction--lead .px-auction__high { color: var(--ok); }
+.px-auction__clock { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.px-auction__clock b { font-size: 20px; font-weight: 600; line-height: 1; }
+.px-auction__clock span { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #1a1304; background: var(--gold); padding: 2px 8px; border-radius: 999px; }
+.px-auction--open .px-auction__clock span { background: rgba(255,255,255,0.12); color: var(--fg-dim); }
+.px-auction--urgent { border-color: rgba(255, 92, 92, 0.6); }
+.px-auction--urgent .px-auction__clock b { color: var(--danger); animation: px-pulse 1s ease-in-out infinite; }
+.px-auction__body { padding: 0 12px 6px; border-top: 1px solid var(--glass-border); animation: px-rise 0.25s var(--ease); }
+.px-auction__body .px-bid { padding-top: 10px; }
+.px-auction__view { width: 100%; font-size: 13px; color: var(--muted); min-height: 44px; }
+
+.px-bid { display: flex; flex-direction: column; gap: 8px; }
+.px-bid__status { display: flex; justify-content: space-between; gap: 12px; padding: 12px 14px; border-radius: 14px; background: rgba(255,213,74,0.08); border: 1px solid rgba(255,213,74,0.3); }
+.px-bid__stat { display: flex; flex-direction: column; gap: 4px; }
+.px-bid__stat--right { align-items: flex-end; text-align: right; }
+.px-bid__stat b { font-size: 22px; font-weight: 600; line-height: 1; color: var(--fg); }
+.px-bid__stat--right b { color: var(--gold); }
+.px-bid__stat b small { font-size: 12px; color: var(--fg-dim); font-family: var(--font-ui); font-weight: 600; margin-left: 4px; }
+.px-bid__none { font-size: 15px !important; color: var(--fg-dim) !important; font-family: var(--font-ui); }
+.px-bid__status--urgent { border-color: rgba(255,92,92,0.55); background: rgba(255,92,92,0.08); }
+.px-bid__status--urgent .px-bid__stat:first-child b { color: var(--danger); animation: px-pulse 1s ease-in-out infinite; }
+.px-bid__chips { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.px-bid__chip {
+  appearance: none; font: inherit; cursor: pointer; color: var(--fg);
+  min-height: 48px; padding: 4px 2px; border-radius: 12px;
+  border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s var(--ease);
+  -webkit-tap-highlight-color: transparent;
+}
+.px-bid__chip span { font-size: 13px; font-weight: 700; }
+.px-bid__chip small { font-size: 11px; color: var(--muted); }
+.px-bid__chip:active { transform: scale(0.95); }
+.px-bid__chip:disabled { opacity: 0.45; cursor: default; }
+.px-bid__chip--on { background: rgba(255,213,74,0.16); border-color: rgba(255,213,74,0.6); }
+.px-bid__chip--on small { color: var(--gold); }
 
 /* Toasts */
 .px-toasts {
@@ -533,8 +634,12 @@
   transform: translateY(100%); opacity: 0;
   transition: transform 0.45s var(--ease-out), opacity 0.3s var(--ease);
   z-index: 11;
+  /* Closed drawer stays in the tree above the listing card (z-index 10). Without this,
+     opacity:0 still eats taps on Play sound / Claim, especially on desktop where the
+     closed state is only translateX(40px). */
+  pointer-events: none;
 }
-.px-portfolio--open { transform: translateY(0); opacity: 1; }
+.px-portfolio--open { transform: translateY(0); opacity: 1; pointer-events: auto; }
 .px-portfolio__head { display: flex; align-items: flex-end; justify-content: space-between; padding: 8px 64px 10px 18px; gap: 12px; }
 .px-portfolio__head h3 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
 .px-portfolio__head p { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
@@ -586,9 +691,61 @@
   display: grid;
   grid-template-rows: auto 1fr auto;
   grid-template-columns: minmax(300px, 1fr) minmax(0, 1.2fr) minmax(300px, 1fr);
-  grid-template-areas: "stats stats stats" "ticker . lb" "ticker . qr";
+  grid-template-areas: "stats stats stats" "ticker . lb" "ticker auction qr";
   gap: 20px; padding: 20px;
 }
+
+.px-big__auction {
+  grid-area: auction; align-self: end;
+  display: grid; grid-template-columns: 110px 1fr auto; grid-template-areas: "planet main main" "planet bid clock";
+  column-gap: 22px; row-gap: 10px; align-items: center;
+  padding: 18px 24px;
+  border-color: rgba(255, 213, 74, 0.45);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.45), 0 0 50px rgba(255, 213, 74, 0.12), inset 0 1px 0 var(--glass-highlight);
+  animation: px-rise 0.6s var(--ease) both;
+}
+.px-big__auction > .px-planet { grid-area: planet; }
+.px-big__auction-main { grid-area: main; min-width: 0; }
+.px-big__auction-eyebrow { display: inline-flex; align-items: center; gap: 8px; color: var(--gold); font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; font-size: 14px; }
+.px-big__auction-eyebrow i { width: 10px; height: 10px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 14px var(--gold); animation: px-pulse 1.2s ease-in-out infinite; }
+.px-big__auction-name { font-size: 40px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.px-big__auction-sys { font-size: 16px; color: var(--muted); margin-top: 2px; }
+.px-big__auction-stat { grid-area: bid; display: flex; flex-direction: column; gap: 4px; line-height: 1; min-width: 0; }
+.px-big__auction-stat span { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.px-big__auction-stat b { font-size: 44px; font-weight: 600; }
+.px-big__auction-stat em { font-style: normal; font-size: 20px; font-weight: 700; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.px-big__auction-none { font-size: 28px !important; color: var(--fg-dim); font-family: var(--font-ui); }
+.px-big__auction-bid { display: inline-block; animation: px-big-bid 0.9s var(--ease); }
+@keyframes px-big-bid { 0% { transform: scale(1.35); text-shadow: 0 0 30px var(--gold); } 100% { transform: scale(1); text-shadow: none; } }
+.px-big__auction-clock { grid-area: clock; align-items: flex-end; }
+.px-big__auction-clock b { font-size: 64px; color: var(--fg); }
+.px-big__auction--urgent { border-color: rgba(255, 92, 92, 0.7); box-shadow: 0 10px 40px rgba(0,0,0,0.45), 0 0 60px rgba(255, 92, 92, 0.25); }
+.px-big__auction--urgent .px-big__auction-clock b { color: var(--danger); animation: px-pulse 1s ease-in-out infinite; }
+
+.px-big__sold {
+  position: absolute; inset: 0; z-index: 30; pointer-events: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px;
+  background: radial-gradient(60% 50% at 50% 50%, rgba(0,0,0,0.75), rgba(0,0,0,0.25) 70%, transparent);
+  animation: px-sold-bg 7s var(--ease) both;
+}
+@keyframes px-sold-bg { 0% { opacity: 0; } 6% { opacity: 1; } 88% { opacity: 1; } 100% { opacity: 0; } }
+.px-big__sold-stamp {
+  color: var(--gold); font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;
+  font-size: 200px; line-height: 1; padding: 10px 50px; border: 12px solid currentColor; border-radius: 24px;
+  text-shadow: 0 0 60px currentColor; box-shadow: 0 0 80px rgba(255, 213, 74, 0.35), inset 0 0 50px rgba(255, 213, 74, 0.2);
+  animation: px-sold-stamp 7s var(--ease) both;
+}
+@keyframes px-sold-stamp {
+  0% { opacity: 0; transform: rotate(-8deg) scale(3); }
+  7% { opacity: 1; transform: rotate(-8deg) scale(0.94); }
+  10% { transform: rotate(-8deg) scale(1.03); }
+  13% { transform: rotate(-8deg) scale(1); }
+  88% { opacity: 1; transform: rotate(-8deg) scale(1); }
+  100% { opacity: 0; transform: rotate(-8deg) scale(1.06); }
+}
+.px-big__sold-line { font-size: 44px; color: var(--fg); text-align: center; animation: px-rise 0.6s 0.5s var(--ease) both; text-shadow: 0 4px 30px rgba(0,0,0,0.8); }
+.px-big__sold-line b { font-weight: 700; }
+.px-big__sold-line .px-mono { color: var(--gold); }
 .px-big__stats { grid-area: stats; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 16px 28px; }
 .px-big__brand { display: flex; align-items: center; gap: 12px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; font-size: 18px; }
 .px-big__brand i { width: 12px; height: 12px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 20px var(--gold); }
@@ -611,6 +768,9 @@
 .px-big__line .px-mono { color: var(--gold); font-size: 22px; }
 .px-big__line--takeover b:first-child { color: var(--danger); }
 .px-big__line--new { background: linear-gradient(90deg, rgba(255,213,74,0.18), transparent); border-radius: 10px; padding: 4px 10px; margin: -4px -10px; }
+.px-big__line--won { color: var(--gold); font-weight: 600; }
+.px-big__line--won b { color: var(--gold); }
+.px-big__line--won.px-big__line--new { background: linear-gradient(90deg, rgba(255,213,74,0.4), rgba(255,213,74,0.05)); box-shadow: 0 0 30px rgba(255,213,74,0.25); animation: px-rise 0.5s var(--ease) both, px-big-bid 0.9s var(--ease); }
 
 .px-big__lb { grid-area: lb; display: flex; flex-direction: column; padding: 20px 22px; min-height: 0; overflow: hidden; }
 .px-big__lb .px-lb__head { padding: 0 0 12px; }
@@ -632,12 +792,57 @@
 .px-big__qr-copy .px-mono { color: var(--gold); font-size: 15px; }
 
 @media (max-width: 899px) {
-  .px-big { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto auto; grid-template-areas: "stats" "ticker" "lb" "qr"; gap: 12px; padding: 12px; }
+  .px-big { grid-template-columns: 1fr; grid-template-rows: auto auto 1fr auto auto; grid-template-areas: "stats" "auction" "ticker" "lb" "qr"; gap: 12px; padding: 12px; }
+  .px-big__auction { grid-template-columns: 64px 1fr auto; column-gap: 14px; padding: 14px 16px; }
+  .px-big__auction > .px-planet { --size: 64px !important; }
+  .px-big__auction-name { font-size: 24px; }
+  .px-big__auction-stat b { font-size: 26px; }
+  .px-big__auction-clock b { font-size: 34px; }
+  .px-big__sold-stamp { font-size: 90px; border-width: 6px; padding: 6px 24px; }
+  .px-big__sold-line { font-size: 22px; padding: 0 16px; }
   .px-big__stats { flex-wrap: wrap; padding: 14px 18px; }
   .px-big__nums { gap: 18px; }
   .px-big__num b { font-size: 26px; }
   .px-big__line { font-size: 16px; }
   .px-big__lb .px-lb__name, .px-big__lb .px-lb__val { font-size: 16px; }
+}
+
+/* ---------- Mobile (phones, 390 px baseline) ---------- */
+@media (max-width: 899px) {
+  /* Landing: scroll on short screens instead of colliding with the brand row. */
+  .px-landing { justify-content: flex-start; overflow-y: auto; overscroll-behavior: contain; padding-top: calc(var(--safe-top) + 64px); }
+  .px-landing__inner { margin: auto auto 0; }
+
+  /* HUD top: credits + search only. The leaderboard moves to the thumb zone. */
+  .px-hud-top { grid-template-columns: auto minmax(0, 1fr); }
+  .px-search { max-width: 480px; }
+  .px-credits { min-width: 0; }
+
+  /* Bottom band lets drags through to the scene except on the real controls. */
+  .px-hud-bottom { pointer-events: none; }
+  .px-hud-bottom .px-teleport, .px-hud-bottom .px-ticker { pointer-events: auto; }
+
+  /* Leaderboard: round trophy button level with Teleport, panel opens upward. */
+  .px-lb-wrap { position: fixed; right: calc(var(--safe-right) + 12px); bottom: calc(var(--safe-bottom) + 14px); z-index: 6; transition: opacity 0.25s var(--ease); }
+  .px-lb-toggle { width: 56px; height: 56px; min-height: 56px; padding: 0; border-radius: 50%; }
+  .px-lb-toggle__label { display: none; }
+  .px-lb { top: auto; bottom: calc(100% + 8px); transform-origin: bottom right; }
+  .px-lb--closed { transform: translateY(8px) scale(0.96); }
+  .px-root--card .px-lb-wrap { opacity: 0; pointer-events: none; }
+
+  /* Portfolio header: long callsigns wrap instead of pushing the total off screen. */
+  .px-portfolio__head > div:first-child { min-width: 0; }
+  .px-portfolio__head h3 { overflow-wrap: anywhere; }
+}
+
+@media (max-width: 520px) {
+  /* Search results span the full HUD width instead of the narrow search box. */
+  .px-search { position: static; }
+  .px-search__item > span:nth-child(2) { min-width: 0; }
+  .px-search__item > span:nth-child(2) > b,
+  .px-search__item > span:nth-child(2) > span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .px-search__item em { white-space: nowrap; }
+  .px-search__results { max-height: 45dvh; }
 }
 
 /* ---------- Desktop ---------- */
@@ -655,6 +860,8 @@
   .px-teleport-wrap { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); }
   .px-hud-bottom__spacer { width: 380px; }
   .px-root--card .px-hud-bottom { opacity: 1; transform: none; pointer-events: auto; }
+  .px-auction { position: absolute; right: 0; bottom: 0; width: 380px; }
+  .px-root--card .px-auction { opacity: 0; pointer-events: none; }
 
   .px-lb { width: 340px; max-height: calc(100dvh - var(--safe-top) - var(--safe-bottom) - 240px); }
 

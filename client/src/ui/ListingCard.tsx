@@ -1,13 +1,14 @@
 // Listing card for the selected object, with the claim and takeover flow.
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as RPointerEvent, type ReactNode } from 'react';
 import {
-  formatCredits, formatUsd, reducerErrorCode, useActions, useClaim, useConnection, useObject, usePlayer,
+  formatCredits, formatUsd, reducerErrorCode, useActions, useAuctions, useClaim, useConnection, useObject, usePlayer,
   useSceneApi, useSceneStore, useSelectedObjectId,
 } from '../state';
 import { playPlanetSound, stopSound, SOUND_DISCLAIMER } from '../audio';
 import { CREWS, TAKEOVER_MULT, type CelestialObject } from '../types';
 import { Planet } from './Planet';
 import { useToast } from './Toast';
+import { BidControls } from './AuctionPanel';
 import { CLASS_LABEL, ERROR_COPY, fmtDays, fmtDistance, fmtG, fmtMult, fmtTempC, fmtTempK, fmtUsdPerKg } from './format';
 
 type Phase = 'idle' | 'pending' | 'claimed' | 'sniped' | 'insufficient' | 'auction';
@@ -44,6 +45,7 @@ function CardBody({ obj, open, onClose }: { obj: CelestialObject; open: boolean;
   const me = usePlayer();
   const { identity } = useConnection();
   const claim = useClaim(obj.id);
+  const auction = useAuctions().find(a => a.objectId === obj.id && a.active);
   const actions = useActions();
   const api = useSceneApi();
   const toast = useToast();
@@ -240,13 +242,15 @@ function CardBody({ obj, open, onClose }: { obj: CelestialObject; open: boolean;
         )}
 
         <div className="px-cta">
-          {showAuction ? (
-            <div className="px-auction-line">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 4l6 6-8 8-6-6zM4 20h8" /></svg>
-              Auction only. Watch the big screen.
-            </div>
+          {auction ? (
+            <BidControls auction={auction} obj={obj} showStatus />
           ) : mine ? (
             <p className="px-cta__hint px-cta__hint--ok">This one is in your portfolio. Nice work, landlord.</p>
+          ) : showAuction ? (
+            <div className="px-auction-line">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 4l6 6-8 8-6-6zM4 20h8" /></svg>
+              {claim ? 'Sold at auction. Off the market for now.' : 'Auction only. Watch the big screen.'}
+            </div>
           ) : (
             <>
               <button

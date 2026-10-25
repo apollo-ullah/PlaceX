@@ -39,8 +39,9 @@ export function Planet({ cls, size = 96 }: { cls: PlanetClass; size?: number }) 
     '--p-glow': look.glow,
     '--p-bands': look.bands ?? 'none',
   } as CSSProperties;
-  const mods = [cls === 'water' && 'px-planet--water', cls === 'lava' && 'px-planet--lava',
-    cls === 'carbon' && 'px-planet--carbon', look.ring && 'px-planet--ring'].filter(Boolean).join(' ');
+  const mods = [cls === 'water' && 'px-planet--water', (cls === 'lava' || cls === 'hot_jupiter') && 'px-planet--lava',
+    cls === 'carbon' && 'px-planet--carbon', cls === 'ice_giant' && 'px-planet--ice', cls === 'gas_giant' && 'px-planet--gas',
+    look.ring && 'px-planet--ring'].filter(Boolean).join(' ');
   return (
     <div className={`px-planet ${mods}`} style={style} aria-hidden>
       {look.ring && <i className="px-planet__ring" />}

@@ -1,6 +1,6 @@
 // PlaceX UI shell. Rendered on top of the 3D scene inside a fixed full-screen div.
-//   <Shell big={false} /> explorer: landing until hasProfile, then HUD, leaderboard, ticker, listing card.
-//   <Shell big />         venue display: stats, ticker, leaderboard, QR slot.
+//   <Shell big={false} /> explorer: landing until hasProfile, then HUD, leaderboard, ticker, auction, listing card.
+//   <Shell big />         venue display: stats, auction strip, ticker, leaderboard, QR slot.
 // The .px-root layer is pointer-events: none so taps fall through to the scene; each child re-enables them.
 import './ui.css';
 import { useCallback, useEffect, useState } from 'react';
@@ -13,6 +13,9 @@ import { Ticker } from './Ticker';
 import { ListingCard } from './ListingCard';
 import { BigScreen } from './BigScreen';
 import { AchievementToasts, Portfolio, TakeoverBanner } from './Extras';
+import { AuctionPanel } from './AuctionPanel';
+
+export { AuctionPanel, BidControls } from './AuctionPanel';
 
 export function Shell({ big = false }: { big?: boolean }) {
   return (
@@ -46,6 +49,7 @@ function Explorer() {
         <Ticker />
         <Teleport />
         <span className="px-hud-bottom__spacer" />
+        <AuctionPanel />
       </div>
       <ConnectionPill />
       <ListingCard />

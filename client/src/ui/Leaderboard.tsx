@@ -48,17 +48,16 @@ export function Leaderboard() {
   const rows = useLeaderboard('value', 1);
   const leader = rows[0];
   return (
-    <div style={{ position: 'relative', justifySelf: 'end' }}>
+    <div className="px-lb-wrap">
       <button
         type="button"
         className={`px-glass px-btn px-lb-toggle ${open ? 'px-btn--pressed' : ''}`}
-        style={{ paddingLeft: 12, paddingRight: 14 }}
         aria-expanded={open}
         aria-label="Toggle leaderboard"
         onClick={() => setOpen(o => !o)}
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={open ? 'var(--gold)' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z" /><path d="M7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3" /></svg>
-        {leader && !open ? <span style={{ color: CREWS[leader.crew].color, fontSize: 13 }}>{leader.callsign}</span> : <span style={{ fontSize: 13 }}>Top</span>}
+        {leader && !open ? <span className="px-lb-toggle__label" style={{ color: CREWS[leader.crew].color }}>{leader.callsign}</span> : <span className="px-lb-toggle__label">Top</span>}
       </button>
       <div className={`px-glass px-lb ${open ? '' : 'px-lb--closed'}`} aria-hidden={!open}>
         <LeaderboardPanel tab={tab} onTab={setTab} />

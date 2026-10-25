@@ -91,6 +91,20 @@ export function fmtDays(d: number): { v: string; unit: string } {
   return { v: (d / 365.25).toFixed(1), unit: 'years' };
 }
 
+/** Auction clock: "4:07" under an hour, "1:04:07" above. */
+export function fmtCountdown(ms: number): string {
+  const s = Math.max(0, Math.ceil(ms / 1000));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const ss = String(s % 60).padStart(2, '0');
+  return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`;
+}
+
+/** Server rule: opening bid is at least the list price, every later bid beats the high bid. */
+export function minBid(priceCredits: number, highBid: number): number {
+  return Math.max(priceCredits, highBid + 1);
+}
+
 export function fmtG(g: number): string { return g < 0.1 ? g.toFixed(3) : g.toFixed(2); }
 
 export function fmtMult(m: number): string {

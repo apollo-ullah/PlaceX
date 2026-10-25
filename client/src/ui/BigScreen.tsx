@@ -1,9 +1,56 @@
-// /big: venue display. Stats bar, full-height ticker, leaderboard, QR slot. No landing, no card.
+// /big: venue display. Stats bar, full-height ticker, leaderboard, QR slot, live auction strip,
+// and a SOLD flash when an auction settles. No landing, no card.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatCredits, useEvents, useObjects, useStats } from '../state';
+import type { CelestialObject, EventView } from '../types';
 import { LeaderboardPanel } from './Leaderboard';
 import { TickerLine } from './Ticker';
-import { isTickerEvent } from './format';
+import { Planet } from './Planet';
+import { useActiveAuction, useNow } from './AuctionPanel';
+import { fmtCountdown, isTickerEvent, objectName } from './format';
+
+function AuctionStrip() {
+  const live = useActiveAuction();
+  const now = useNow();
+  if (!live) return null;
+  const { auction, obj } = live;
+  const remaining = auction.endsAt - now;
+  const urgent = remaining > 0 && remaining < 60_000;
+  return (
+    <div className={`px-glass px-big__auction ${urgent ? 'px-big__auction--urgent' : ''}`}>
+      <Planet cls={obj.cls} size={110} />
+      <div className="px-big__auction-main">
+        <div className="px-big__auction-eyebrow"><i />Live auction</div>
+        <div className="px-big__auction-name">{obj.name}</div>
+        <div className="px-big__auction-sys">{obj.system === 'Sol' ? 'Solar System' : `Orbits ${obj.system}`} · opens at {formatCredits(obj.priceCredits)} cr</div>
+      </div>
+      <div className="px-big__auction-stat">
+        <span>High bid</span>
+        {auction.highBid > 0 ? (
+          <>
+            <b key={auction.highBid} className="px-mono px-gold px-big__auction-bid">{formatCredits(auction.highBid)}</b>
+            <em>{auction.highBidderCallsign ?? 'anon'}</em>
+          </>
+        ) : <b className="px-big__auction-none">No bids yet</b>}
+      </div>
+      <div className="px-big__auction-stat px-big__auction-clock">
+        <span>Gavel in</span>
+        <b className="px-mono">{remaining > 0 ? fmtCountdown(remaining) : '0:00'}</b>
+      </div>
+    </div>
+  );
+}
+
+function SoldFlash({ e, byId }: { e: EventView; byId: Map<string, CelestialObject> }) {
+  return (
+    <div className="px-big__sold" aria-live="assertive">
+      <div className="px-big__sold-stamp">Sold</div>
+      <div className="px-big__sold-line">
+        <b>{objectName(byId, e.objectId)}</b> to <b className="px-gold">{e.actorCallsign}</b> for <span className="px-mono">{formatCredits(e.amount)} cr</span>
+      </div>
+    </div>
+  );
+}
 
 function Num({ n, label, gold = false }: { n: number; label: string; gold?: boolean }) {
   return (
@@ -23,6 +70,7 @@ export function BigScreen() {
   const [qrOk, setQrOk] = useState(true);
   const newest = useRef<string | null>(null);
   const [fresh, setFresh] = useState<string | null>(null);
+  const [sold, setSold] = useState<EventView | null>(null);
 
   // Rotate the leaderboard tab so both views get airtime.
   useEffect(() => {
@@ -33,12 +81,20 @@ export function BigScreen() {
   useEffect(() => {
     const top = events[0]?.id ?? null;
     if (top && top !== newest.current) {
+      const first = newest.current === null;
       newest.current = top;
       setFresh(top);
+      if (!first && events[0].kind === 'auction_won') setSold(events[0]);
       const t = setTimeout(() => setFresh(null), 2500);
       return () => clearTimeout(t);
     }
   }, [events]);
+
+  useEffect(() => {
+    if (!sold) return;
+    const t = setTimeout(() => setSold(null), 7000);
+    return () => clearTimeout(t);
+  }, [sold]);
 
   const origin = typeof window !== 'undefined' ? window.location.origin.replace(/^https?:\/\//, '') : 'placex';
 
@@ -77,6 +133,9 @@ export function BigScreen() {
           <p className="px-mono">{origin}</p>
         </div>
       </div>
+
+      <AuctionStrip />
+      {sold && <SoldFlash key={sold.id} e={sold} byId={byId} />}
     </div>
   );
 }

@@ -232,20 +232,20 @@ BLURBS: dict[str, list[str]] = {
 }
 
 SOLAR_BLURBS: dict[str, str] = {
-    "sun": "The original anchor tenant and the brightest address in the neighborhood. Powers every property within four light years and never takes a day off.",
-    "mercury": "Dense little starter planet with a 88 day year and the fastest commute around the Sun. Scorching days, freezing nights, no atmosphere to speak of.",
-    "venus": "Earth's twin with a serious greenhouse problem. Crushing pressure, acid clouds and a day longer than its year, but what a glow at sunset.",
-    "earth": "Fully furnished blue marble with oceans, breathable air and one moon included. Highly motivated species already in residence.",
-    "moon": "Quiet lot next door to Earth with no atmosphere, no neighbors and no noise. Views of the home planet from every angle.",
-    "mars": "Rust-red fixer-upper with the tallest mountain in the neighborhood. Thin air, big skies, two tiny moons thrown in.",
-    "jupiter": "Largest listing in the Solar System, with a perpetual storm feature on a 190-year lease. Not suitable for standing.",
-    "saturn": "Ring system included at no extra charge. Floats on water in theory, dazzles in practice, dozens of moons for guest parking.",
-    "uranus": "Sideways-spinning ice giant with 21-year seasons. Cool blue finish, possible diamond rain, extremely private.",
-    "neptune": "Deep blue ice giant with the fastest winds in the Solar System. Far from the crowd, 165 years per lap around the Sun.",
-    "pluto": "Beloved former planet with a giant heart on its surface. Nitrogen ice plains, five moons, and a 248-year wait for your first anniversary.",
-    "europa": "Icy shell over a global ocean with more water than Earth. Prime candidate for life next door, Jupiter views included.",
-    "titan": "Only moon with a thick atmosphere and real lakes, filled with liquid methane. Hazy orange skies, Saturn on the horizon.",
-    "io": "Most volcanically active property in the Solar System. Hundreds of active vents, lava fountains and nonstop fireworks courtesy of Jupiter.",
+    "sun": "Anchor property of the whole neighborhood, holding 99.8 percent of the Solar System's mass with a glowing 5,800 K finish. Sunlight reaches Earth in about 8 minutes, so the view is basically instant.",
+    "mercury": "Compact starter planet on the fastest orbit in the neighborhood, with a full year in just 88 days. Daytime heat near 700 K, nighttime chill near 100 K, and no atmosphere to soften either.",
+    "venus": "Earth's near twin in size, with a statement greenhouse finish at 737 K and 92 atmospheres of pressure. Come for the golden glow, stay for a day that outlasts the year.",
+    "earth": "Fully furnished blue marble with liquid oceans, breathable air and one moon included. The only known address with life already in residence, so the neighbors come standard.",
+    "moon": "Quiet lot beside Earth with no atmosphere and just 0.165 g, so every step is a bounce. It drifts about 3.8 centimeters farther away each year, for ever more privacy.",
+    "mars": "Rust-red fixer-upper featuring Olympus Mons, the tallest volcano in the Solar System at about 22 kilometers. Thin air, big skies and two small moons thrown in, so pack a coat for 210 K.",
+    "jupiter": "The largest lot in the neighborhood at about 318 Earths of mass, with a Great Red Spot storm raging for at least 190 years. No solid surface, so skip the open house.",
+    "saturn": "Rings included at no extra charge, made mostly of water ice. Less dense than water, it would float in a big enough bathtub, and with hundreds of moons the guest parking is covered.",
+    "uranus": "Sideways-spinning ice giant tilted about 98 degrees, for seasons that last roughly 21 years each. Cool blue finish, possible diamond rain deep inside, and a very private 59 K.",
+    "neptune": "Deep blue ice giant with the fastest winds measured in the Solar System, above 2,000 kilometers per hour. Remote enough for total privacy, with one lap around the Sun every 165 years.",
+    "pluto": "Beloved former planet with a heart-shaped plain of nitrogen ice called Sputnik Planitia. At 44 K, it is a 248-year wait for your first anniversary.",
+    "europa": "Icy shell over a likely global saltwater ocean holding more water than all of Earth's oceans combined. Waterfront living at 102 K on the surface, with Jupiter looming overhead.",
+    "titan": "The only moon with a thick atmosphere, plus lakes and seas of liquid methane and ethane. Hazy orange skies, Saturn on the horizon, and a lakefront that sits at a chilly 94 K.",
+    "io": "The most volcanically active property in the Solar System, with hundreds of volcanoes and lava fountains tens of kilometers high. Nonstop fireworks courtesy of Jupiter, no permit required.",
 }
 
 
