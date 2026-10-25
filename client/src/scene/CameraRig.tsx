@@ -5,9 +5,9 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { PerspectiveCamera, Vector3 } from 'three';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
-import { useSceneStore } from '../state';
-import { clamp01, easeInCubic, easeInOutCubic, easeOutCubic, rig } from './bus';
-import { expandPoint, nearestObject } from './layout';
+import { useObjectsStore, useSceneStore } from '../state';
+import { clamp01, DEBUG, easeInCubic, easeInOutCubic, easeOutCubic, rig } from './bus';
+import { expandPoint, nearestObject, worldPosition } from './layout';
 import { makeSceneApi, WARP_ARRIVE, WARP_CHARGE } from './api';
 
 export const BASE_FOV = 60;
@@ -23,7 +23,12 @@ export function CameraRig() {
   useEffect(() => {
     rig.camera = camera;
     rig.controls = controls.current;
-    registerApi(makeSceneApi());
+    const api = makeSceneApi();
+    registerApi(api);
+    if (DEBUG) {
+      // Dev-only hook so the console and headless tests can drive the scene: window.__placex
+      (window as unknown as { __placex?: unknown }).__placex = { api, store: useSceneStore, rig, worldPosition, objects: useObjectsStore };
+    }
     return () => {
       registerApi(null);
       rig.camera = null;

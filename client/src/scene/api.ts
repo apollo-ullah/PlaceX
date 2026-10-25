@@ -5,7 +5,7 @@ import { Vector3 } from 'three';
 import { useObjectsStore, useSceneStore, type SceneApi } from '../state';
 import type { CelestialObject } from '../types';
 import { IS_MOBILE, rig, useFx } from './bus';
-import { getLayout, LAYOUT, visualRadius, worldPosition } from './layout';
+import { getLayout, LAYOUT, systemCenter, visualRadius, worldPosition } from './layout';
 
 export const WARP_CHARGE = 0.5;   // seconds, fov widens and streaks build
 export const WARP_ARRIVE = 0.85;  // seconds, settle at the destination
@@ -14,8 +14,22 @@ const WORLD_UP = new Vector3(0, 1, 0);
 function framing(obj: CelestialObject, dir: Vector3, distMult: number) {
   const cam = rig.camera!;
   const target = worldPosition(obj, new Vector3());
-  const dist = Math.max(LAYOUT.FRAME_DISTANCE, visualRadius(obj) * 9) * distMult;
+  // Far enough to see the object's siblings (the ring), never closer than FRAME_DISTANCE.
+  const byId = useObjectsStore.getState().byId;
+  let spread = 0;
+  const tmp = new Vector3();
+  for (const id of getLayout().systems.get(obj.system) ?? []) {
+    const sib = byId.get(id);
+    if (sib && sib.id !== obj.id) spread = Math.max(spread, worldPosition(sib, tmp).distanceTo(target));
+  }
+  const dist = Math.max(LAYOUT.FRAME_DISTANCE, visualRadius(obj) * 9, spread * 0.85) * distMult;
   dir.normalize();
+  // Swing toward the host star so the lit face of the planet is what the player sees.
+  const center = systemCenter(obj.system, new Vector3());
+  if (center && obj.cls !== 'star') {
+    const toStar = center.sub(target);
+    if (toStar.lengthSq() > 1e-6) dir.multiplyScalar(0.5).addScaledVector(toStar.normalize(), 0.6);
+  }
   dir.y = Math.max(dir.y, 0.35);
   dir.normalize();
   const pos = target.clone().addScaledVector(dir, dist);
@@ -87,7 +101,18 @@ export function playClaimAnimation(id: string, color: string) {
   const from = earth ? worldPosition(earth, new Vector3()) : new Vector3(0, 0, 0);
   if (from.distanceToSquared(to) < 1e-6) from.add(new Vector3(0.3, 0.2, 0.3));
   const d = from.distanceTo(to);
-  const ctrl = from.clone().lerp(to, 0.5).addScaledVector(WORLD_UP, Math.max(0.3, d * 0.3));
+  // Bend the path through the camera's side of the target so the final approach is on screen.
+  const cam = rig.camera;
+  let ctrl: Vector3;
+  if (cam) {
+    const toTarget = to.clone().sub(cam.position);
+    const side = new Vector3().crossVectors(toTarget, WORLD_UP).normalize();
+    if (side.lengthSq() < 1e-6) side.set(1, 0, 0);
+    const camDist = toTarget.length();
+    ctrl = cam.position.clone().addScaledVector(toTarget, 0.55).addScaledVector(side, camDist * 0.45).addScaledVector(WORLD_UP, camDist * 0.15);
+  } else {
+    ctrl = from.clone().lerp(to, 0.5).addScaledVector(WORLD_UP, Math.max(0.3, d * 0.3));
+  }
   useFx.getState().addRocket({ from, to, ctrl, color, start: performance.now(), dur: 1500, targetId: id });
 }
 

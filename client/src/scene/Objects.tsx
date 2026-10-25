@@ -11,9 +11,10 @@ import {
 import { useClaims, useObjects, usePlayer } from '../state';
 import { CREWS, GOLD, UNCLAIMED } from '../types';
 import { getLayout, visualRadius } from './layout';
+import { IS_MOBILE } from './bus';
 
-const MIN_PX = 3;
-const MAX_PX = 44;
+const MIN_PX = IS_MOBILE ? 4 : 4.5;
+const MAX_PX = IS_MOBILE ? 32 : 44;
 /** Glow half-size relative to the visual sphere radius. */
 const GLOW_MULT = 2.6;
 
@@ -53,7 +54,7 @@ const frag = /* glsl */ `
     vec2 c = (vUv - 0.5) * 2.0;
     float d = length(c);
     if (d > 1.0) discard;
-    float core = smoothstep(0.42, 0.0, d);
+    float core = smoothstep(0.5, 0.0, d);
     float halo = exp(-d * d * 3.5) * 0.55;
     float glow = core * 1.25 + halo;
     vec3 col = vColor * glow * (1.0 + 0.7 * vPulse);

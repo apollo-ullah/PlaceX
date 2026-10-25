@@ -55,7 +55,9 @@ const frag = /* glsl */ `
     vec3 L = normalize(uLightPos - vWorldPos);
     vec3 V = normalize(cameraPosition - vWorldPos);
     float ndl = max(dot(N, L), 0.0);
-    float diff = 0.10 + 0.90 * ndl;
+    // Wrapped diffuse keeps the night side readable without real lights.
+    float wrap = clamp(dot(N, L) * 0.5 + 0.5, 0.0, 1.0);
+    float diff = 0.12 + 0.88 * mix(wrap * wrap, ndl, 0.5);
     float spec = pow(max(dot(reflect(-L, N), V), 0.0), 24.0) * ndl;
     float fres = pow(1.0 - max(dot(N, V), 0.0), 3.0);
     vec3 p = normalize(vObjPos) * 3.0;

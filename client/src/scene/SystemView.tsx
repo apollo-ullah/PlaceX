@@ -39,7 +39,7 @@ function HostStar({ center }: { center: Vector3 }) {
   const material = useMemo(() => makePlanetMaterial('star'), []);
   useEffect(() => () => material.dispose(), [material]);
   useFrame(({ clock }) => { material.uniforms.uTime.value = clock.elapsedTime; });
-  return <mesh position={center} scale={0.16} geometry={sphereGeo} material={material} />;
+  return <mesh position={center} scale={0.11} geometry={sphereGeo} material={material} />;
 }
 
 function Ring({ getTarget, color, opacity }: { getTarget: () => { pos: Vector3; radius: number } | null; color: string; opacity: number }) {

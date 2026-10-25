@@ -128,7 +128,7 @@ function RocketFx({ r }: { r: Rocket }) {
       g.rotateX(Math.PI / 2); // cone points along +Y locally, so align +Y with the path
     }
     const dist = camera.position.distanceTo(tmp.p);
-    g.scale.setScalar(Math.max(0.03, dist * 0.014));
+    g.scale.setScalar(Math.max(0.03, dist * 0.02));
     const flame = g.children[2] as Mesh | undefined;
     if (flame) flame.scale.setScalar(0.8 + 0.5 * Math.random());
 
