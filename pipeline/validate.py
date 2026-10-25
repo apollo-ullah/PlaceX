@@ -42,7 +42,7 @@ PLACEHOLDER_IDS = ["earth", "moon", "mars", "jupiter", "proxima-cen-b", "trappis
 SLUG_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 BAD_DASHES = "—–"
 MIN_OBJECTS = 5000
-MAX_BYTES = 4_000_000  # strict reading of "under 4 MB"
+MAX_BYTES = 5_000_000  # lead decision: ship the full catalog (6,000+), gzip makes this ~620 KB on the wire
 
 
 def is_num(v, allow_int=True):
@@ -205,7 +205,7 @@ def main() -> int:
     if len(data) < MIN_OBJECTS:
         errors.append(f"only {len(data)} objects, need at least {MIN_OBJECTS}")
     if size > MAX_BYTES:
-        errors.append(f"objects.json is {size / 1e6:.2f} MB, limit 4 MB")
+        errors.append(f"objects.json is {size / 1e6:.2f} MB, limit 5 MB")
 
     if os.path.exists(STARS):
         with open(STARS, encoding="utf-8") as f:
