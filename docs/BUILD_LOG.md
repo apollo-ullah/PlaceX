@@ -48,3 +48,21 @@ Decisions:
 - Admin is whoever published the module (stored in `config` on init), not a hardcoded hex.
 - `event` is a normal table pruned to 200 rows in reducers, so the ticker has history on load.
 - Scheduled reducers are gated by `config.incomeEnabled` and `config.auctionsEnabled` so they ship disabled and get flipped with `set_flags`.
+
+## Phase 2: parallel P0 build (dispatched 00:05)
+
+Five subagents launched at once, each in its own git worktree and branch, each given
+`docs/AGENT_BRIEFS.md`, the PRD, the contract files, and strict file ownership:
+
+| Agent | Owns | P0 due |
+| --- | --- | --- |
+| A Backend | `server/`, `scripts/load.ts`, `scripts/seed.mjs` | 1:45 (takeover, achievements, tests), 2:15 (income, auctions, load test, cloud republish) |
+| B Data | `pipeline/`, `client/public/data/` | 1:30 (full NASA catalog objects.json, stars.json, validator) |
+| C 3D | `client/src/scene/` | 2:15 (instanced universe, tap, teleport, claim rocket) |
+| D UI | `client/src/ui/` | 2:15 (landing, HUD, card, ticker, leaderboard, SNIPED, big mode) |
+| E Audio | `client/src/audio/` | 2:15 (procedural wind engine, class layers, orbit tone) |
+
+Lead in parallel:
+- Vercel project `placex` linked to `client/`, production env `VITE_STDB_URI=wss://maincloud.spacetimedb.com`, `VITE_STDB_DB=placex`. First production deploy of main (stubs) succeeded. Vercel Authentication was on by default and blocked the public; turned off.
+- `placex.vercel.app` is owned by someone else. Public aliases: `placex-iota.vercel.app`, `placex-adyan-ullahs-projects.vercel.app` (plus any memorable alias set below).
+- Merge order when branches pass review: B, A, D, C, E. Then swap stubs, redeploy, QR, tell Ady.
